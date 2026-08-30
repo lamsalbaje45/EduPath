@@ -137,7 +137,10 @@ const getInterestedStudentsForOpportunityHandler = asyncHandler(async (req, res)
 
     // Check if user is employer or admin
     if (req.user.role !== 'employer' && req.user.role !== 'admin') {
-        return sendError(res, 'Unauthorized: Only employers and admins can access this endpoint.', 403);
+        return sendError(res, {
+            status: 403,
+            message: 'You do not have permission to access this resource.',
+        });
     }
 
     const students = await getInterestingStudentsForOpportunity(opportunityId, {
@@ -175,7 +178,10 @@ const getRecommendationExplanation = asyncHandler(async (req, res) => {
     }
 
     if (!relevantItem) {
-        return sendError(res, 'Item not found in recommendations.', 404);
+        return sendError(res, {
+            status: 404,
+            message: 'Item not found in recommendations.',
+        });
     }
 
     return sendSuccess(res, {

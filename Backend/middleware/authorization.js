@@ -1,4 +1,5 @@
 import { ROLES } from '../config/roles.js';
+import { sendError } from '../utils/apiResponse.js';
 
 function isAdmin(user) {
     return Boolean(user && user.role === ROLES.ADMIN);
@@ -7,13 +8,15 @@ function isAdmin(user) {
 function requireRole(...allowedRoles) {
     return (req, res, next) => {
         if (!req.user) {
-            return res.status(401).json({
+            return sendError(res, {
+                status: 401,
                 message: 'Authentication required.',
             });
         }
 
         if (!allowedRoles.includes(req.user.role)) {
-            return res.status(403).json({
+            return sendError(res, {
+                status: 403,
                 message: 'Not authorized for this action.',
             });
         }
@@ -27,7 +30,8 @@ const requireAdmin = requireRole(ROLES.ADMIN);
 function requireOwnershipOrAdmin(getOwnerId, fieldName = 'ownerId') {
     return (req, res, next) => {
         if (!req.user) {
-            return res.status(401).json({
+            return sendError(res, {
+                status: 401,
                 message: 'Authentication required.',
             });
         }
@@ -39,13 +43,15 @@ function requireOwnershipOrAdmin(getOwnerId, fieldName = 'ownerId') {
         const ownerId = getOwnerId(req);
 
         if (!ownerId) {
-            return res.status(403).json({
+            return sendError(res, {
+                status: 403,
                 message: `Missing ${fieldName} for ownership check.`,
             });
         }
 
         if (String(ownerId) !== String(req.user.id)) {
-            return res.status(403).json({
+            return sendError(res, {
+                status: 403,
                 message: 'You do not have permission to modify this resource.',
             });
         }
@@ -56,7 +62,8 @@ function requireOwnershipOrAdmin(getOwnerId, fieldName = 'ownerId') {
 
 function requireStudentSelf(req, res, next) {
     if (!req.user) {
-        return res.status(401).json({
+        return sendError(res, {
+            status: 401,
             message: 'Authentication required.',
         });
     }
@@ -68,7 +75,8 @@ function requireStudentSelf(req, res, next) {
     }
 
     if (!targetUserId || String(targetUserId) !== String(req.user.id)) {
-        return res.status(403).json({
+        return sendError(res, {
+            status: 403,
             message: 'You can only access your own student data.',
         });
     }

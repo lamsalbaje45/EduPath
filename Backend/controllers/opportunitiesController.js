@@ -1,7 +1,7 @@
 import { Opportunity } from '../models/opportunity.js';
 import { buildOpportunityQuery, buildPaginationMetadata } from '../services/queryBuilders.js';
 
-import { asyncHandler, isDatabaseConnected, sendSuccess } from './controllerUtils.js';
+import { asyncHandler, isDatabaseConnected, sendPaginated } from './controllerUtils.js';
 
 const listOpportunities = asyncHandler(async (req, res) => {
     const query = buildOpportunityQuery(req.query);
@@ -15,7 +15,7 @@ const listOpportunities = asyncHandler(async (req, res) => {
         ]);
     }
 
-    return sendSuccess(res, {
+    return sendPaginated(res, {
         message: 'Opportunities retrieved successfully.',
         data: opportunities,
         meta: buildPaginationMetadata({ ...query.pagination, total }),

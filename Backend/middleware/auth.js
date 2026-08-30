@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import { sendError } from '../utils/apiResponse.js';
 
 function getJwtSecret() {
     return process.env.JWT_SECRET || 'development-secret';
@@ -9,7 +10,8 @@ function authenticateToken(req, res, next) {
     const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
 
     if (!token) {
-        return res.status(401).json({
+        return sendError(res, {
+            status: 401,
             message: 'Authentication token is required.',
         });
     }
@@ -25,9 +27,9 @@ function authenticateToken(req, res, next) {
 
         return next();
     } catch (error) {
-        return res.status(401).json({
+        return sendError(res, {
+            status: 401,
             message: 'Invalid or expired token.',
-            error: error.message,
         });
     }
 }

@@ -1,7 +1,7 @@
 import { OnlineClass } from '../models/onlineClass.js';
 import { buildClassQuery, buildPaginationMetadata } from '../services/queryBuilders.js';
 
-import { asyncHandler, isDatabaseConnected, sendSuccess } from './controllerUtils.js';
+import { asyncHandler, isDatabaseConnected, sendPaginated } from './controllerUtils.js';
 
 const listClasses = asyncHandler(async (req, res) => {
     const query = buildClassQuery(req.query);
@@ -15,7 +15,7 @@ const listClasses = asyncHandler(async (req, res) => {
         ]);
     }
 
-    return sendSuccess(res, {
+    return sendPaginated(res, {
         message: 'Online classes retrieved successfully.',
         data: classes,
         meta: buildPaginationMetadata({ ...query.pagination, total }),

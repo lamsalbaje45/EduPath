@@ -1,4 +1,5 @@
 import { validationResult, body, param, query } from 'express-validator';
+import { sendError } from '../utils/apiResponse.js';
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 10;
@@ -16,7 +17,8 @@ function handleValidationErrors(req, res, next) {
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
-        return res.status(400).json({
+        return sendError(res, {
+            status: 400,
             message: 'Validation failed',
             errors: errors.array().map((error) => ({
                 field: error.path || error.param || 'unknown',

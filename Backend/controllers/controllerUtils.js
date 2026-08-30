@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { sendCreated, sendError, sendPaginated, sendSuccess } from '../utils/apiResponse.js';
 
 function asyncHandler(handler) {
     return function wrappedController(req, res, next) {
@@ -6,17 +7,8 @@ function asyncHandler(handler) {
     };
 }
 
-function sendSuccess(res, { status = 200, message, data, meta, ...extra }) {
-    return res.status(status).json({
-        message,
-        ...(data !== undefined ? { data } : {}),
-        ...(meta !== undefined ? { meta } : {}),
-        ...extra,
-    });
-}
-
 function isDatabaseConnected() {
     return mongoose.connection.readyState === 1;
 }
 
-export { asyncHandler, isDatabaseConnected, sendSuccess };
+export { asyncHandler, isDatabaseConnected, sendCreated, sendError, sendPaginated, sendSuccess };

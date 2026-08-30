@@ -1,7 +1,7 @@
 import { College } from '../models/college.js';
 import { buildCollegeQuery, buildPaginationMetadata } from '../services/queryBuilders.js';
 
-import { asyncHandler, isDatabaseConnected, sendSuccess } from './controllerUtils.js';
+import { asyncHandler, isDatabaseConnected, sendPaginated } from './controllerUtils.js';
 
 const listColleges = asyncHandler(async (req, res) => {
     const query = buildCollegeQuery(req.query);
@@ -15,7 +15,7 @@ const listColleges = asyncHandler(async (req, res) => {
         ]);
     }
 
-    return sendSuccess(res, {
+    return sendPaginated(res, {
         message: 'Colleges retrieved successfully.',
         data: colleges,
         meta: buildPaginationMetadata({ ...query.pagination, total }),

@@ -5,6 +5,7 @@ import mongoose from 'mongoose';
 import { connectDatabase } from './config/database.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import apiRouter from './routes/index.js';
+import { sendSuccess } from './utils/apiResponse.js';
 
 dotenv.config();
 
@@ -14,14 +15,15 @@ const app = express();
 app.use(express.json());
 app.use('/api', apiRouter);
 
-app.get('/', (req, res) => {
-    res.status(200).json({ message: 'EduPath backend is running' });
-});
+app.get('/', (req, res) => sendSuccess(res, { message: 'EduPath backend is running.' }));
 
 app.get('/health', (req, res) => {
-    res.status(200).json({
-        status: 'ok',
-        database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    return sendSuccess(res, {
+        message: 'Service is healthy.',
+        data: {
+            status: 'ok',
+            database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+        },
     });
 });
 
