@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import collegesRouter from '../routes/colleges.js';
-import opportunitiesRouter from '../routes/opportunities.js';
-import classesRouter from '../routes/classes.js';
+import collegesRouter from '../routes/collegeRoutes.js';
+import opportunitiesRouter from '../routes/opportunitiesRoutes.js';
+import classesRouter from '../routes/classesRoutes.js';
 
 async function invokeRoute(router, query) {
     const layer = router.stack.find((entry) => entry.route && entry.route.path === '/');
@@ -44,6 +44,7 @@ test('college route exposes pagination metadata and search filters', async () =>
     });
 
     assert.equal(payload.meta.page, 2);
+    assert.equal(payload.success, true);
     assert.equal(payload.meta.limit, 5);
     assert.equal(payload.filters.searchTerm, 'MIT');
     assert.deepEqual(payload.filters.course, ['Computer Science']);
@@ -65,6 +66,7 @@ test('opportunity route exposes pagination metadata and opportunity filters', as
     });
 
     assert.equal(payload.meta.page, 1);
+    assert.equal(payload.success, true);
     assert.equal(payload.meta.limit, 10);
     assert.equal(payload.filters.searchTerm, 'frontend');
     assert.deepEqual(payload.filters.type, ['job']);
@@ -85,6 +87,7 @@ test('class route exposes pagination metadata and class filters', async () => {
     });
 
     assert.equal(payload.meta.page, 3);
+    assert.equal(payload.success, true);
     assert.equal(payload.meta.limit, 7);
     assert.equal(payload.filters.searchTerm, 'node');
     assert.deepEqual(payload.filters.level, ['beginner']);

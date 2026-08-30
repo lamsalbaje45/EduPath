@@ -27,6 +27,7 @@ test('authenticateToken rejects missing authorization header', async () => {
     await authenticateToken(req, res, next);
 
     assert.equal(res.statusCode, 401);
+    assert.equal(res.payload.success, false);
     assert.equal(nextCalled, false);
     assert.equal(res.payload.message, 'Authentication token is required.');
 });

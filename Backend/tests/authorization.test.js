@@ -26,6 +26,7 @@ test('requireAdmin rejects non-admin users', async () => {
     await requireAdmin(req, res, next);
 
     assert.equal(res.statusCode, 403);
+    assert.equal(res.payload.success, false);
     assert.equal(nextCalled, false);
 });
 

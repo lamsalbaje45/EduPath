@@ -31,6 +31,7 @@ test('college list validation rejects invalid pagination values', async () => {
     await validateCollegeListQuery(req, res, next);
 
     assert.equal(res.statusCode, 400);
+    assert.equal(res.payload.success, false);
     assert.equal(nextCalled, false);
     assert.equal(res.payload.message, 'Validation failed');
     assert.ok(Array.isArray(res.payload.errors));
@@ -96,6 +97,7 @@ test('class list validation rejects invalid certificate filter', async () => {
     await validateClassListQuery(req, res, next);
 
     assert.equal(res.statusCode, 400);
+    assert.equal(res.payload.success, false);
     assert.equal(nextCalled, false);
 });
 
