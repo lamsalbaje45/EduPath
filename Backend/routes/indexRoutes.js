@@ -1,15 +1,16 @@
 import { Router } from 'express';
 
 import { authenticateToken } from '../middleware/auth.js';
-import authRouter from './auth.js';
-import usersRouter from './users.js';
-import studentsRouter from './students.js';
-import collegesRouter from './colleges.js';
-import opportunitiesRouter from './opportunities.js';
-import classesRouter from './classes.js';
-import inquiriesRouter from './inquiries.js';
-import applicationsRouter from './applications.js';
-import cvRouter from './cv.js';
+import authRouter from './authRoutes.js';
+import usersRouter from './userRoutes.js';
+import studentsRouter from './studentRoutes.js';
+import collegesRouter from './collegeRoutes.js';
+import opportunitiesRouter from './opportunitiesRoutes.js';
+import classesRouter from './classesRoutes.js';
+import inquiriesRouter from './inquiriesRoutes.js';
+import applicationsRouter from './applicationRoutes.js';
+import cvRouter from './cvRoutes.js';
+import recommendationsRouter from './recommendationsRoutes.js';
 
 const apiRouter = Router();
 
@@ -22,5 +23,6 @@ apiRouter.use('/classes', classesRouter);
 apiRouter.use('/inquiries', authenticateToken, inquiriesRouter);
 apiRouter.use('/applications', authenticateToken, applicationsRouter);
 apiRouter.use('/cv', authenticateToken, cvRouter);
+apiRouter.use('/recommendations', recommendationsRouter);
 
 export default apiRouter;
