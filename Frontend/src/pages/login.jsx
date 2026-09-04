@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 
 const inputBase = 'w-full px-4 py-3 border rounded-xl text-sm font-sans bg-white/90 dark:bg-slate-900/90 dark:text-white transition-all focus:outline-none focus:ring-0'
 const inputState = (error) => error
@@ -10,6 +10,7 @@ const errorText = 'text-red-500 text-xs'
 
 function Login() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [formData, setFormData] = useState({ email: '', password: '', rememberMe: false })
   const [errors, setErrors] = useState({})
   const [isLoading, setIsLoading] = useState(false)
@@ -36,7 +37,7 @@ function Login() {
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000))
       setSuccessMessage('Signed in successfully!')
-      setTimeout(() => navigate('/'), 800)
+      setTimeout(() => navigate(location.state?.from || '/'), 800)
     } catch {
       setErrors({ submit: 'An error occurred. Please try again.' })
     } finally {

@@ -11,7 +11,7 @@ import { colleges, onlineClasses, opportunities, sampleUsers } from './seeds/ini
 
 dotenv.config();
 
-const DEFAULT_SEED_PASSWORD = 'ChangeMe123!';
+const DEFAULT_SEED_PASSWO RD = 'ChangeMe123!';
 
 function toUserUpdate(user, passwordHash) {
     return {

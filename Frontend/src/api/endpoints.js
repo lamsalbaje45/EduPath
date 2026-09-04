@@ -147,17 +147,21 @@ export const getApplications = async (params = {}) => {
   }
 }
 
-export const createApplication = async (opportunityId, message = '') => {
+export const createApplication = async (application, legacyMessage = '') => {
+  const payload = typeof application === 'string'
+    ? { opportunityId: application, coverMessage: legacyMessage }
+    : application
+
   try {
-    const response = await apiClient.post('/applications', { opportunityId, message })
+    const response = await apiClient.post('/applications', payload)
     if (isStubResponse(response)) {
       console.warn('[API] POST /applications is a stub, using mock adapter. TODO: implement backend endpoint')
-      return await mockAdapter.createApplication(opportunityId, message)
+      return await mockAdapter.createApplication(payload)
     }
     return response
   } catch (error) {
     console.warn('[API] createApplication failed, falling back to mock adapter:', error.message)
-    return await mockAdapter.createApplication(opportunityId, message)
+    return await mockAdapter.createApplication(payload)
   }
 }
 

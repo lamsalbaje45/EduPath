@@ -187,16 +187,22 @@ export const mockAdapter = {
    * Create application
    * TODO: replace with real API once backend implements POST /applications
    */
-  createApplication: async (opportunityId, message) => {
+  createApplication: async (application) => {
     const mockData = getStoredMockData()
     if (!mockData.applications) mockData.applications = []
+
+    const applicationData = typeof application === 'string'
+      ? { opportunityId: application }
+      : application
     
     const newApp = {
       id: `app_${Date.now()}`,
-      opportunityId,
-      status: 'applied',
-      message,
-      appliedDate: new Date().toISOString(),
+      opportunityId: applicationData.opportunityId,
+      coverMessage: applicationData.coverMessage || '',
+      cvReference: applicationData.cvReference,
+      cvSnapshot: applicationData.cvSnapshot,
+      status: 'submitted',
+      appliedAt: new Date().toISOString(),
     }
     
     mockData.applications.push(newApp)

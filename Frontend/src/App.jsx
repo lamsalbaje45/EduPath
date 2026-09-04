@@ -11,6 +11,8 @@ import Register from "./pages/register";
 import Profile from "./pages/profile";
 import Colleges from "./pages/colleges";
 import CollegeDetail from "./pages/collegeDetail";
+import Jobs from "./pages/jobs";
+import JobDetail from "./pages/jobDetail";
 import { PlaceholderPage } from "./pages/placeholder";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -32,14 +34,8 @@ function AppRoutes() {
         <Route path="/colleges" element={<Colleges />} />
         <Route path="/colleges/:id" element={<CollegeDetail />} />
 
-        <Route
-          path="/jobs"
-          element={<PlaceholderPage title="Jobs & Internships" />}
-        />
-        <Route
-          path="/jobs/:id"
-          element={<PlaceholderPage title="Job Details" />}
-        />
+        <Route path="/jobs" element={<Jobs />} />
+        <Route path="/jobs/:id" element={<JobDetail />} />
 
         <Route
           path="/online-classes"

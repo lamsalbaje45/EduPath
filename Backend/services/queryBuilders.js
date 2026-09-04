@@ -195,6 +195,11 @@ function buildOpportunityQuery(query = {}) {
         filters.push({ workMode: { $in: workModeFilter } });
     }
 
+    const suitableCourseFilter = toTextArray(query.suitableCourse || query.course || query.suitableCourses);
+    if (suitableCourseFilter.length > 0) {
+        filters.push({ suitableCourses: { $in: suitableCourseFilter.map((course) => new RegExp(escapeRegex(course), 'i')) } });
+    }
+
     if (query.status) {
         filters.push({ status: String(query.status).trim() });
     }
@@ -227,6 +232,7 @@ function buildOpportunityQuery(query = {}) {
             skill: skillsFilter,
             location: locationFilter,
             workMode: workModeFilter,
+            suitableCourse: suitableCourseFilter,
             status: query.status ? String(query.status).trim() : undefined,
             deadlineBefore: deadlineBefore || undefined,
             deadlineAfter: deadlineAfter || undefined,
