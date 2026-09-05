@@ -4,7 +4,7 @@
  * token generation, and credential validation
  */
 
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 

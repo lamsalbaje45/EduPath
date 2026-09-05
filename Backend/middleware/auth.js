@@ -56,4 +56,4 @@ function optionalAuth(req, res, next) {
     return next();
 }
 
-export { authenticateToken, optionalAuth };
+export { authenticateToken, getJwtSecret, optionalAuth };

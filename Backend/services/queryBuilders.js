@@ -297,6 +297,38 @@ function buildClassQuery(query = {}) {
     };
 }
 
+function buildUserQuery(query = {}, { forceRole } = {}) {
+    const filters = [];
+    const searchTerm = query.search || query.q || query.keyword;
+
+    const searchClause = buildTextSearchClause(['fullName', 'email'], searchTerm);
+    if (searchClause) {
+        filters.push(searchClause);
+    }
+
+    const role = forceRole || query.role;
+    if (role) {
+        filters.push({ role: String(role).trim() });
+    }
+
+    if (query.accountStatus) {
+        filters.push({ accountStatus: String(query.accountStatus).trim() });
+    }
+
+    const { page, limit, skip } = buildPagination(query);
+
+    return {
+        filter: filters.length > 0 ? { $and: filters } : {},
+        sort: buildSort(query, { createdAt: -1 }),
+        pagination: { page, limit, skip },
+        search: {
+            searchTerm: searchTerm ? String(searchTerm).trim() : undefined,
+            role: role || undefined,
+            accountStatus: query.accountStatus ? String(query.accountStatus).trim() : undefined,
+        },
+    };
+}
+
 export {
     buildClassQuery,
     buildCollegeQuery,
@@ -304,4 +336,5 @@ export {
     buildPagination,
     buildPaginationMetadata,
     buildSort,
+    buildUserQuery,
 };

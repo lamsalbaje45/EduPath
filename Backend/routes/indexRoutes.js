@@ -22,7 +22,7 @@ apiRouter.use('/opportunities', opportunitiesRouter);
 apiRouter.use('/classes', classesRouter);
 apiRouter.use('/inquiries', authenticateToken, inquiriesRouter);
 apiRouter.use('/applications', authenticateToken, applicationsRouter);
-apiRouter.use('/cv', authenticateToken, cvRouter);
+apiRouter.use('/cv', cvRouter);
 apiRouter.use('/recommendations', recommendationsRouter);
 
 export default apiRouter;

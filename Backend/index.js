@@ -4,7 +4,7 @@ import mongoose from 'mongoose';
 
 import { connectDatabase } from './config/database.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
-import apiRouter from './routes/index.js';
+import apiRouter from './routes/indexRoutes.js';
 import { sendSuccess } from './utils/apiResponse.js';
 
 dotenv.config();

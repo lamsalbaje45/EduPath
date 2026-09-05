@@ -1,10 +1,4 @@
-/**
- * Shared API response helpers.
- *
- * Successful responses always include `success`, `message`, and (when
- * applicable) `data`. Failed responses include `success: false`, a simple
- * message, and optional field-level `errors` for clients to display.
- */
+
 function sendSuccess(res, { status = 200, message = 'Request completed successfully.', data, meta, ...extra } = {}) {
     return res.status(status).json({
         success: true,
