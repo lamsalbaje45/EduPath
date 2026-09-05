@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 const inputBase = 'w-full px-4 py-3 border rounded-xl text-sm font-sans bg-white/90 dark:bg-slate-900/90 dark:text-white transition-all focus:outline-none focus:ring-0'
 const inputState = (error) => error
@@ -11,6 +12,8 @@ const errorText = 'text-red-500 text-xs'
 function Login() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { login } = useAuth()
+
   const [formData, setFormData] = useState({ email: '', password: '', rememberMe: false })
   const [errors, setErrors] = useState({})
   const [isLoading, setIsLoading] = useState(false)
@@ -34,12 +37,17 @@ function Login() {
     }
 
     setIsLoading(true)
+    setErrors({})
+    setSuccessMessage('')
+
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      // TODO: POST /auth/login will be called via login() once backend adds endpoint
+      await login(formData.email, formData.password)
       setSuccessMessage('Signed in successfully!')
       setTimeout(() => navigate(location.state?.from || '/'), 800)
-    } catch {
-      setErrors({ submit: 'An error occurred. Please try again.' })
+    } catch (err) {
+      console.error('Login error:', err)
+      setErrors({ submit: err?.message || 'Invalid email or password. Please try again.' })
     } finally {
       setIsLoading(false)
     }

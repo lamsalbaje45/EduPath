@@ -12,6 +12,21 @@ import {
   Select,
 } from "../components/ui";
 
+/**
+ * Opportunity / Job Detail Page
+ * Client-side lookup caveat: filters /opportunities list result by _id
+ * TODO: switch to GET /opportunities/:id once backend adds single-item endpoint
+ *
+ * Features:
+ * - Header: title, companyName, type/workMode/status badges, location, stipendOrSalaryRange, application deadline
+ * - Body: Description, Required Skills (chips), Suitable Courses (chips), How to apply card
+ * - Apply button:
+ *   - If applicationLink present -> External link to company site (target="_blank", rel="noopener noreferrer")
+ *   - If internalApplication true & applicationLink empty -> Internal apply flow (modal with cover message + CV selection)
+ *   - If unauthenticated -> Redirect to /login preserving return path
+ * - Save / Bookmark pattern: localStorage-backed saved jobs per user ID
+ */
+
 const toTitleCase = (value) =>
   value ? `${value.charAt(0).toUpperCase()}${value.slice(1)}` : "";
 
@@ -42,12 +57,16 @@ function JobDetail() {
   const location = useLocation();
   const { user, isAuthenticated } = useAuth();
 
+  // State
   const [opportunity, setOpportunity] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Bookmark / Save job state
   const [savedJobs, setSavedJobs] = useState([]);
   const [isSaved, setIsSaved] = useState(false);
 
+  // Apply modal state
   const [showApplicationModal, setShowApplicationModal] = useState(false);
   const [coverMessage, setCoverMessage] = useState("");
   const [cv, setCv] = useState(null);
@@ -60,6 +79,7 @@ function JobDetail() {
 
   const returnPath = `${location.pathname}${location.search}`;
 
+  // Load saved jobs from localStorage on mount or auth change
   useEffect(() => {
     if (!isAuthenticated || !user?.id) {
       setSavedJobs([]);
@@ -73,13 +93,14 @@ function JobDetail() {
     setIsSaved(stored.includes(id));
   }, [id, isAuthenticated, user]);
 
+  // Fetch opportunity details
+  // Client-side lookup caveat: filters /opportunities list result by _id
+  // TODO: switch to GET /opportunities/:id once backend adds single-item endpoint
   const fetchOpportunity = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
-      // Fetch the list and find the opportunity client-side.
-      // TODO: switch to GET /opportunities/:id once the backend adds it.
       const response = await api.listOpportunities({ limit: 100, page: 1 });
       const found = response.data?.find((item) => item._id === id);
 
@@ -103,6 +124,7 @@ function JobDetail() {
     if (id) fetchOpportunity();
   }, [fetchOpportunity, id]);
 
+  // Fetch user CV data for application
   const loadCv = useCallback(async () => {
     setCvLoading(true);
     setCvError(null);
@@ -116,7 +138,7 @@ function JobDetail() {
       console.error("Failed to load CV:", err);
       setCv(null);
       setSelectedCvReference("");
-      setCvError("Could not load your CV. You can still apply without one.");
+      setCvError("Could not load your CV. You can still submit your cover message.");
     } finally {
       setCvLoading(false);
     }
@@ -128,6 +150,7 @@ function JobDetail() {
     setApplicationSuccess(false);
   };
 
+  // Open apply flow (redirects to /login if unauthenticated)
   const openApplicationFlow = () => {
     if (!isAuthenticated) {
       navigate("/login", { state: { from: returnPath } });
@@ -140,6 +163,7 @@ function JobDetail() {
     loadCv();
   };
 
+  // Bookmark / Save toggle handler
   const handleToggleSaveJob = () => {
     if (!isAuthenticated || !user?.id) {
       navigate("/login", { state: { from: returnPath } });
@@ -156,6 +180,7 @@ function JobDetail() {
     localStorage.setItem(storageKey, JSON.stringify(updated));
   };
 
+  // Submit internal application
   const handleSubmitApplication = async (event) => {
     event.preventDefault();
     setApplicationError(null);
@@ -224,6 +249,7 @@ function JobDetail() {
 
   return (
     <main className="min-h-screen bg-gray-50">
+      {/* Header Banner */}
       <div className="bg-white shadow-sm">
         <div className="mx-auto max-w-5xl px-5 py-10 sm:px-8">
           <div className="flex flex-col items-start justify-between gap-6 md:flex-row">
@@ -235,6 +261,7 @@ function JobDetail() {
                 {opportunity.title}
               </h1>
 
+              {/* Badges: Type / WorkMode / Status */}
               <div className="mt-4 flex flex-wrap gap-2">
                 <Badge variant="primary" size="md">
                   {toTitleCase(opportunity.type)}
@@ -258,29 +285,44 @@ function JobDetail() {
                 </Badge>
               </div>
 
+              {/* Meta details: Location / Compensation / Deadline */}
               <div className="mt-5 space-y-1.5 text-sm text-gray-700">
-                {opportunity.location && <p>Location: {opportunity.location}</p>}
-                {opportunity.stipendOrSalaryRange && (
-                  <p className="font-semibold text-slate-950">
-                    {opportunity.stipendOrSalaryRange}
+                {opportunity.location && (
+                  <p className="flex items-center gap-1">
+                    <span>📍 Location:</span>
+                    <span className="font-medium text-slate-900">
+                      {opportunity.location}
+                    </span>
                   </p>
                 )}
-                <p>
-                  Deadline: {formatDeadline(opportunity.applicationDeadline)}
-                  {isClosed && " · Closed"}
+                {opportunity.stipendOrSalaryRange && (
+                  <p className="flex items-center gap-1">
+                    <span>💵 Stipend / Salary:</span>
+                    <span className="font-semibold text-slate-950">
+                      {opportunity.stipendOrSalaryRange}
+                    </span>
+                  </p>
+                )}
+                <p className="flex items-center gap-1">
+                  <span>⏳ Deadline:</span>
+                  <span className="font-medium text-slate-900">
+                    {formatDeadline(opportunity.applicationDeadline)}
+                    {isClosed && " (Closed)"}
+                  </span>
                 </p>
               </div>
             </div>
 
-            <div className="flex w-full flex-col gap-2 sm:w-auto">
+            {/* Action Buttons */}
+            <div className="flex w-full flex-col gap-2.5 sm:w-auto">
               {hasExternalApplication ? (
                 <a
                   href={opportunity.applicationLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center rounded-xl bg-[#5472FC] px-6 py-3 text-base font-black text-white transition-all hover:bg-[#435DDE] focus:outline-none focus:ring-2 focus:ring-[#5472FC] focus:ring-offset-2"
+                  className="inline-flex items-center justify-center rounded-xl bg-[#5472FC] px-6 py-3 text-base font-black text-white shadow-sm transition-all hover:bg-[#435DDE] focus:outline-none focus:ring-2 focus:ring-[#5472FC] focus:ring-offset-2"
                 >
-                  Apply on company site
+                  Apply on company site ↗
                 </a>
               ) : canApplyInternally ? (
                 <Button
@@ -290,38 +332,43 @@ function JobDetail() {
                   disabled={isClosed}
                   className="whitespace-nowrap"
                 >
-                  {isClosed ? "Applications closed" : "Apply"}
+                  {isClosed ? "Applications closed" : "Apply now"}
                 </Button>
               ) : (
                 <Button variant="secondary" size="lg" disabled>
                   Applications unavailable
                 </Button>
               )}
+
               <Button
                 variant={isSaved ? "primary" : "outline"}
                 size="lg"
                 onClick={handleToggleSaveJob}
                 className="whitespace-nowrap"
               >
-                {isSaved ? "★ Saved" : "☆ Save job"}
+                {isSaved ? "❤️ Saved" : "🤍 Save Job"}
               </Button>
             </div>
           </div>
         </div>
       </div>
 
+      {/* Main Body */}
       <div className="mx-auto max-w-5xl px-5 py-8 sm:px-8">
         <div className="grid gap-6 lg:grid-cols-3">
+          {/* Main details column */}
           <div className="space-y-6 lg:col-span-2">
+            {/* Description */}
             <Card>
               <h2 className="mb-4 text-2xl font-black text-slate-950">
                 Description
               </h2>
               <p className="whitespace-pre-line leading-relaxed text-gray-700">
-                {opportunity.description || "No description available."}
+                {opportunity.description || "No description provided for this opportunity."}
               </p>
             </Card>
 
+            {/* Required Skills */}
             <Card>
               <h2 className="mb-4 text-2xl font-black text-slate-950">
                 Required Skills
@@ -335,10 +382,11 @@ function JobDetail() {
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500">No skills listed.</p>
+                <p className="text-gray-500">No required skills listed.</p>
               )}
             </Card>
 
+            {/* Suitable Courses */}
             <Card>
               <h2 className="mb-4 text-2xl font-black text-slate-950">
                 Suitable Courses
@@ -352,33 +400,34 @@ function JobDetail() {
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500">No courses listed.</p>
+                <p className="text-gray-500">No suitable courses specified.</p>
               )}
             </Card>
           </div>
 
+          {/* How to Apply Sidebar */}
           <Card className="h-fit lg:sticky lg:top-4">
             <h2 className="mb-3 text-xl font-black text-slate-950">
-              How to apply
+              How to Apply
             </h2>
             {hasExternalApplication ? (
               <p className="text-sm leading-relaxed text-gray-700">
-                Continue to the company&apos;s website to complete your
-                application.
+                This opportunity requires applying through the company&apos;s
+                official website. Click the button above to open their application portal.
               </p>
             ) : canApplyInternally ? (
               <p className="text-sm leading-relaxed text-gray-700">
-                Apply through EduPath with a cover message and your CV from CV
-                Maker.
+                You can apply directly through EduPath. Click <strong>Apply now</strong> to submit a cover message and attach your CV from CV Maker.
               </p>
             ) : (
               <p className="text-sm leading-relaxed text-gray-700">
-                This opportunity is not currently accepting applications.
+                This opportunity is currently not accepting applications.
               </p>
             )}
           </Card>
         </div>
 
+        {/* Back navigation */}
         <Button
           variant="ghost"
           size="md"
@@ -389,19 +438,22 @@ function JobDetail() {
         </Button>
       </div>
 
+      {/* Internal Application Modal */}
       {showApplicationModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-6">
           <Card className="max-h-[90vh] w-full max-w-lg overflow-y-auto">
             <div className="mb-4 flex items-center justify-between gap-4">
               <div>
-                <h2 className="text-2xl font-black text-slate-950">Apply</h2>
+                <h2 className="text-2xl font-black text-slate-950">
+                  Apply for Opportunity
+                </h2>
                 <p className="mt-1 text-sm text-gray-600">
                   {opportunity.title} at {opportunity.companyName}
                 </p>
               </div>
               <button
                 type="button"
-                aria-label="Close application form"
+                aria-label="Close application modal"
                 onClick={closeApplicationModal}
                 className="text-2xl text-gray-400 hover:text-gray-600"
               >
@@ -410,8 +462,8 @@ function JobDetail() {
             </div>
 
             {applicationSuccess && (
-              <div className="mb-4 rounded-lg bg-green-50 p-3 text-sm text-green-700">
-                Your application has been submitted successfully.
+              <div className="mb-4 rounded-lg bg-green-50 p-3.5 text-sm font-medium text-green-700">
+                ✓ Your application has been submitted successfully!
               </div>
             )}
             {applicationError && (
@@ -428,14 +480,14 @@ function JobDetail() {
                   htmlFor="cover-message"
                   className="mb-2 block text-sm font-medium text-gray-900"
                 >
-                  Cover message
+                  Cover Message
                 </label>
                 <textarea
                   id="cover-message"
                   rows="6"
                   value={coverMessage}
-                  onChange={(event) => setCoverMessage(event.target.value)}
-                  placeholder="Tell the employer why you are a good fit."
+                  onChange={(e) => setCoverMessage(e.target.value)}
+                  placeholder="Introduce yourself and explain why you're a great fit for this position..."
                   className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-[#1F4FD8] focus:outline-none focus:ring-0"
                 />
               </div>
@@ -445,7 +497,7 @@ function JobDetail() {
                   htmlFor="cv-selection"
                   className="mb-2 block text-sm font-medium text-gray-900"
                 >
-                  CV
+                  Attach CV
                 </label>
                 {cvLoading ? (
                   <div className="rounded-xl border border-gray-200 p-3">
@@ -455,10 +507,8 @@ function JobDetail() {
                   <Select
                     id="cv-selection"
                     value={selectedCvReference}
-                    onChange={(event) =>
-                      setSelectedCvReference(event.target.value)
-                    }
-                    placeholder="Apply without a CV"
+                    onChange={(e) => setSelectedCvReference(e.target.value)}
+                    placeholder="Apply without attaching a CV"
                     options={
                       cv && cvReference
                         ? [
@@ -491,7 +541,7 @@ function JobDetail() {
                   loading={applicationLoading}
                   className="flex-1"
                 >
-                  Submit application
+                  Submit Application
                 </Button>
               </div>
             </form>

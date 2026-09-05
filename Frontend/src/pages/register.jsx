@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 const inputBase =
   'w-full px-4 py-3 border rounded-xl text-sm font-sans bg-white/90 dark:bg-slate-900/90 dark:text-white transition-all focus:outline-none focus:ring-0'
@@ -14,6 +15,9 @@ const errorText = 'text-red-500 text-xs'
 
 function Register() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const { register } = useAuth()
+
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -86,12 +90,20 @@ function Register() {
     }
 
     setIsLoading(true)
-    try {
-      // TODO: Replace with actual API call
-      console.log('Registering user:', formData)
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+    setErrors({})
+    setSuccessMessage('')
 
-      setSuccessMessage('Account created successfully! Redirecting to login...')
+    try {
+      // TODO: POST /auth/register will be called via register() once backend adds endpoint
+      await register(
+        formData.firstName,
+        formData.lastName,
+        formData.email,
+        formData.password,
+        formData.accountType
+      )
+
+      setSuccessMessage('Account created successfully! Redirecting...')
       setFormData({
         firstName: '',
         lastName: '',
@@ -103,10 +115,11 @@ function Register() {
       })
 
       setTimeout(() => {
-        navigate('/login')
-      }, 2000)
-    } catch {
-      setErrors({ submit: 'An error occurred. Please try again.' })
+        navigate(location.state?.from || '/')
+      }, 1200)
+    } catch (err) {
+      console.error('Registration error:', err)
+      setErrors({ submit: err?.message || 'An error occurred during registration. Please try again.' })
     } finally {
       setIsLoading(false)
     }

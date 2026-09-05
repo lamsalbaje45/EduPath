@@ -259,6 +259,11 @@ function buildClassQuery(query = {}) {
         filters.push({ mode: { $in: modeFilter } });
     }
 
+    const subjectFilter = toTextArray(query.subject || query.subjects);
+    if (subjectFilter.length > 0) {
+        filters.push({ subjects: { $in: subjectFilter.map((subj) => new RegExp(escapeRegex(subj), 'i')) } });
+    }
+
     const certificateValue = toBoolean(query.certificate ?? query.hasCertificate);
     if (certificateValue !== undefined) {
         filters.push({ certificateAvailability: certificateValue });

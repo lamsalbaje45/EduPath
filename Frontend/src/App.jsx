@@ -13,6 +13,16 @@ import Colleges from "./pages/colleges";
 import CollegeDetail from "./pages/collegeDetail";
 import Jobs from "./pages/jobs";
 import JobDetail from "./pages/jobDetail";
+import OnlineClasses from "./pages/onlineClasses";
+import OnlineClassDetail from "./pages/onlineClassDetail";
+import CvMaker from "./pages/cvMaker";
+import ListCollege from "./pages/listCollege";
+import PostJob from "./pages/postJob";
+import Applications from "./pages/applications";
+import NotFound from "./pages/notFound";
+import Unauthorized from "./pages/unauthorized";
+import EmployerDashboard from "./pages/employerDashboard";
+import AdminDashboard from "./pages/adminDashboard";
 import { PlaceholderPage } from "./pages/placeholder";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -29,6 +39,7 @@ function AppRoutes() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/unauthorized" element={<Unauthorized />} />
 
         {/* Browse routes */}
         <Route path="/colleges" element={<Colleges />} />
@@ -37,42 +48,77 @@ function AppRoutes() {
         <Route path="/jobs" element={<Jobs />} />
         <Route path="/jobs/:id" element={<JobDetail />} />
 
-        <Route
-          path="/online-classes"
-          element={<PlaceholderPage title="Online Classes" />}
-        />
-        <Route
-          path="/online-classes/:id"
-          element={<PlaceholderPage title="Class Details" />}
-        />
+        <Route path="/online-classes" element={<OnlineClasses />} />
+        <Route path="/online-classes/:id" element={<OnlineClassDetail />} />
 
-        {/* CV Maker */}
+        {/* CV Maker - Gated behind ProtectedRoute */}
         <Route
           path="/cv-maker"
-          element={<PlaceholderPage title="CV Maker" />}
+          element={
+            <ProtectedRoute>
+              <CvMaker />
+            </ProtectedRoute>
+          }
         />
 
-        {/* Frontend profile preview — intentionally available without sign-in. */}
-        <Route path="/profile" element={<Profile />} />
+        {/* Protected Profile & Applications */}
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/applications"
           element={
             <ProtectedRoute>
-              <PlaceholderPage title="My Applications" />
+              <Applications />
             </ProtectedRoute>
           }
         />
 
-        {/* Admin/Partner routes */}
+        {/* Role-Gated Dashboards */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/employer"
+          element={
+            <ProtectedRoute allowedRoles={["employer"]}>
+              <EmployerDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Admin/Partner submission routes */}
         <Route
           path="/list-college"
-          element={<PlaceholderPage title="List Your College" />}
+          element={
+            <ProtectedRoute>
+              <ListCollege />
+            </ProtectedRoute>
+          }
         />
         <Route
           path="/post-job"
-          element={<PlaceholderPage title="Post a Job" />}
+          element={
+            <ProtectedRoute>
+              <PostJob />
+            </ProtectedRoute>
+          }
         />
+
+        {/* Catch-all 404 Route */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </>
   );

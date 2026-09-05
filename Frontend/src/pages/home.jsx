@@ -1,6 +1,9 @@
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import * as api from '../api/endpoints'
 
-const recommendations = [
+const defaultStaticRecommendations = [
   {
     label: 'College Match',
     title: 'Kathmandu Tech College',
@@ -89,7 +92,7 @@ const testimonials = [
     name: 'Achyut Parajuli',
     location: 'Biratnagar, Nepal',
     initials: 'AP',
-    tone: 'from-emerald-200 to-teal-100', 
+    tone: 'from-emerald-200 to-teal-100',
     text: 'I have explored several programs through EduPath, and each one was presented with the details that actually matter to a student.',
   },
   {
@@ -100,6 +103,40 @@ const testimonials = [
     text: 'I wanted to take my career skills to the next level. EduPath showed me useful classes and opportunities that matched my goals.',
   },
 ]
+
+function formatRecommendationItem(item) {
+  if (item.label && item.title && item.meta) return item
+  if (item.collegeName) {
+    return {
+      id: item._id || item.id,
+      label: 'College Match',
+      title: item.collegeName,
+      meta: `${item.courses?.[0] || 'Degree'} - ${item.city || 'Nepal'} - Scholarship available`,
+    }
+  }
+  if (item.companyName || item.type) {
+    return {
+      id: item._id || item.id,
+      label: item.type === 'internship' ? 'Internship Match' : 'Job Match',
+      title: item.title,
+      meta: `${item.companyName} - ${item.workMode || item.location || 'Onsite'} - ${item.stipendOrSalaryRange || 'Competitive'}`,
+    }
+  }
+  if (item.classTitle) {
+    return {
+      id: item._id || item.id,
+      label: 'Online Class',
+      title: item.classTitle,
+      meta: `${item.mode || 'Live class'} - ${item.duration || 'Flexible'} - ${item.certificateAvailability ? 'Certificate' : 'Course'}`,
+    }
+  }
+  return {
+    id: item._id || item.id,
+    label: item.label || 'Recommendation',
+    title: item.title || item.name || 'Recommended Item',
+    meta: item.meta || item.description || '',
+  }
+}
 
 function Pill({ children }) {
   return (
@@ -168,6 +205,62 @@ function TestimonialCard({ testimonial }) {
 
 function Home() {
   const navigate = useNavigate()
+  const { isAuthenticated, user } = useAuth()
+
+  const [recommendations, setRecommendations] = useState(defaultStaticRecommendations)
+  const [loadingRecs, setLoadingRecs] = useState(false)
+  const [recsError, setRecsError] = useState(null)
+
+  useEffect(() => {
+    let isMounted = true
+
+    if (isAuthenticated) {
+      setLoadingRecs(true)
+      setRecsError(null)
+
+      api
+        .getRecommendations('all')
+        .then((response) => {
+          if (!isMounted) return
+          let items = response?.data || response
+          if (Array.isArray(items)) {
+            const formatted = items.map(formatRecommendationItem)
+            setRecommendations(formatted)
+          } else if (items && typeof items === 'object') {
+            // Handle combined response object like { colleges: [], opportunities: [], classes: [] }
+            const combined = [
+              ...(items.colleges || []).map((c) => ({ ...c, collegeName: c.collegeName || c.title })),
+              ...(items.opportunities || []).map((o) => ({ ...o, title: o.title })),
+              ...(items.classes || []).map((cl) => ({ ...cl, classTitle: cl.classTitle || cl.title })),
+            ]
+            if (combined.length > 0) {
+              setRecommendations(combined.map(formatRecommendationItem))
+            } else {
+              setRecommendations([])
+            }
+          } else {
+            setRecommendations(defaultStaticRecommendations)
+          }
+        })
+        .catch((err) => {
+          console.warn('Failed to load recommendations:', err)
+          if (isMounted) {
+            setRecsError('Could not load live recommendations.')
+            setRecommendations(defaultStaticRecommendations)
+          }
+        })
+        .finally(() => {
+          if (isMounted) setLoadingRecs(false)
+        })
+    } else {
+      setRecommendations(defaultStaticRecommendations)
+      setLoadingRecs(false)
+    }
+
+    return () => {
+      isMounted = false
+    }
+  }, [isAuthenticated])
 
   return (
     <main className="bg-white font-sans text-slate-950">
@@ -197,10 +290,10 @@ function Home() {
               </button>
               <button
                 type="button"
-                onClick={() => navigate('/profile')}
+                onClick={() => navigate(isAuthenticated ? '/profile' : '/register')}
                 className="rounded-xl border border-[#5472FC] bg-white px-5 py-3 text-xs font-black text-[#5472FC] shadow-sm transition-colors hover:bg-[#5472FC] hover:text-white focus:outline-none focus:ring-2 focus:ring-[#5472FC] focus:ring-offset-2"
               >
-                Create Profile
+                {isAuthenticated ? 'My Profile' : 'Create Profile'}
               </button>
             </div>
           </div>
@@ -209,7 +302,7 @@ function Home() {
             <div className="flex items-start justify-between gap-5">
               <div>
                 <p className="inline-flex rounded-full bg-[#E7EEFF] px-3 py-1.5 text-[11px] font-black text-[#2551D9]">
-                  Recommended for you
+                  {isAuthenticated ? 'Recommended for you' : 'Featured Matches'}
                 </p>
                 <h2 className="mt-4 text-2xl font-black leading-tight text-slate-950">
                   Best matches
@@ -221,45 +314,59 @@ function Home() {
             </div>
 
             <p className="mt-4 rounded-xl border border-gray-200 bg-[#F8FAFC] px-4 py-4 text-xs leading-5 text-slate-500">
-              Based on your interest in BCA, Python, Django, and internship opportunities.
+              {isAuthenticated
+                ? `Personalized recommendations for ${user?.firstName || 'you'} based on your profile & career interests.`
+                : 'Based on your interest in BCA, Python, Django, and internship opportunities.'}
             </p>
 
             <div className="mt-4 space-y-3">
-              {recommendations.map((item, index) => (
-                <div
-                  key={item.title}
-                  className={`flex gap-3 rounded-xl border bg-white p-3 ${
-                    index === 0 ? 'border-[#B8CAFF]' : 'border-gray-200'
-                  }`}
-                >
-                  <div className="flex h-7 w-7 min-w-7 items-center justify-center rounded-lg bg-[#F8FAFC] text-[11px] font-black text-[#2551D9] ring-1 ring-gray-200">
-                    {index + 1}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-black text-[#2551D9]">{item.label}</p>
-                    <h3 className="mt-0.5 text-sm font-black leading-snug text-slate-950">
-                      {item.title}
-                    </h3>
-                    <p className="mt-0.5 text-xs leading-5 text-slate-500">{item.meta}</p>
-                  </div>
+              {loadingRecs ? (
+                <div className="py-8 text-center space-y-2">
+                  <div className="mx-auto h-6 w-6 animate-spin rounded-full border-2 border-[#5472FC] border-t-transparent" />
+                  <p className="text-xs text-slate-400 font-semibold">Loading recommendations...</p>
                 </div>
-              ))}
+              ) : recommendations.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4 text-center">
+                  <p className="text-xs font-bold text-slate-500">No recommendations found yet</p>
+                  <p className="mt-1 text-[11px] text-slate-400">Complete your student profile to get personalized matches.</p>
+                </div>
+              ) : (
+                recommendations.map((item, index) => (
+                  <div
+                    key={item.id || `${item.title}-${index}`}
+                    className={`flex gap-3 rounded-xl border bg-white p-3 ${
+                      index === 0 ? 'border-[#B8CAFF]' : 'border-gray-200'
+                    }`}
+                  >
+                    <div className="flex h-7 w-7 min-w-7 items-center justify-center rounded-lg bg-[#F8FAFC] text-[11px] font-black text-[#2551D9] ring-1 ring-gray-200">
+                      {index + 1}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-black text-[#2551D9]">{item.label}</p>
+                      <h3 className="mt-0.5 text-sm font-black leading-snug text-slate-950">
+                        {item.title}
+                      </h3>
+                      <p className="mt-0.5 text-xs leading-5 text-slate-500">{item.meta}</p>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
 
             <div className="mt-4 grid grid-cols-2 gap-3">
               <button
                 type="button"
-                onClick={() => navigate('/profile')}
+                onClick={() => navigate(isAuthenticated ? '/profile' : '/login')}
                 className="rounded-xl bg-[#5472FC] px-4 py-3 text-xs font-black text-white transition-colors hover:bg-[#435DDE] focus:outline-none focus:ring-2 focus:ring-[#5472FC] focus:ring-offset-2"
               >
-                View Match
+                {isAuthenticated ? 'View Matches' : 'Sign In'}
               </button>
               <button
                 type="button"
-                onClick={() => navigate('/profile')}
+                onClick={() => navigate(isAuthenticated ? '/profile' : '/register')}
                 className="rounded-xl border border-[#5472FC] bg-white px-4 py-3 text-xs font-black text-[#5472FC] transition-colors hover:bg-[#5472FC] hover:text-white focus:outline-none focus:ring-2 focus:ring-[#5472FC] focus:ring-offset-2"
               >
-                Update Profile
+                {isAuthenticated ? 'Update Profile' : 'Sign Up'}
               </button>
             </div>
           </aside>
@@ -318,6 +425,7 @@ function Home() {
               </select>
               <button
                 type="button"
+                onClick={() => navigate('/colleges')}
                 className="h-11 rounded-xl bg-[#5472FC] px-5 text-xs font-black text-white transition-colors hover:bg-[#435DDE]"
               >
                 Search
@@ -340,25 +448,32 @@ function Home() {
               </p>
               <button
                 type="button"
-                onClick={() => navigate('/profile')}
+                onClick={() => navigate(isAuthenticated ? '/profile' : '/register')}
                 className="mt-5 rounded-xl bg-[#5472FC] px-5 py-3 text-xs font-black text-white transition-colors hover:bg-[#435DDE]"
               >
-                Create Student Profile
+                {isAuthenticated ? 'Go to Profile' : 'Create Student Profile'}
               </button>
             </div>
 
             <div className="rounded-2xl border border-gray-200 bg-[#F8FAFC] p-6">
               <div className="flex items-center gap-4">
                 <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#2551D9] text-sm font-black text-white">
-                  S
+                  {user?.firstName ? user.firstName[0].toUpperCase() : 'S'}
                 </span>
                 <div>
-                  <h3 className="text-sm font-black text-slate-950">Sample Student</h3>
-                  <p className="mt-1 text-xs text-slate-500">BCA - Kathmandu</p>
+                  <h3 className="text-sm font-black text-slate-950">
+                    {user ? `${user.firstName} ${user.lastName}` : 'Sample Student'}
+                  </h3>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {user?.studentProfile?.currentCourse || 'BCA'} - {user?.studentProfile?.address || 'Kathmandu'}
+                  </p>
                 </div>
               </div>
               <div className="mt-5 flex flex-wrap gap-2">
-                {['Python', 'Django', 'Internship', 'Remote'].map((tag) => (
+                {(user?.studentProfile?.skills?.length
+                  ? user.studentProfile.skills
+                  : ['Python', 'Django', 'Internship', 'Remote']
+                ).map((tag) => (
                   <span
                     key={tag}
                     className="rounded-full bg-[#E7EEFF] px-3 py-1.5 text-[11px] font-black text-[#2551D9]"
@@ -450,10 +565,10 @@ function Home() {
             <div className="flex flex-wrap gap-3 md:justify-end">
               <button
                 type="button"
-                onClick={() => navigate('/register')}
+                onClick={() => navigate(isAuthenticated ? '/profile' : '/register')}
                 className="rounded-xl bg-[#5472FC] px-5 py-3 text-xs font-black text-white transition-colors hover:bg-[#435DDE]"
               >
-                Student Signup
+                {isAuthenticated ? 'View Profile' : 'Student Signup'}
               </button>
               <button
                 type="button"
@@ -466,7 +581,7 @@ function Home() {
           </div>
         </section>
       </div>
-    </main> 
+    </main>
   )
 }
 

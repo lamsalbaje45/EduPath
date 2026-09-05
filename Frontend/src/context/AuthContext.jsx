@@ -2,12 +2,24 @@
  * AuthContext - Global authentication state
  * Provides: user, token, login(), register(), logout(), isAuthenticated, loading
  * On mount, hydrates user from localStorage token via getMe()
+ * Ensures user.role is always populated ('student', 'college_admin', 'employer', 'instructor', 'admin')
  */
 
 import { createContext, useContext, useEffect, useState } from 'react'
 import * as api from '../api/endpoints'
 
 const AuthContext = createContext(null)
+
+// Helper to normalize user object ensuring user.role is always present
+const normalizeUser = (userData) => {
+  if (!userData) return null
+  const role = userData.role || userData.accountType || 'student'
+  return {
+    ...userData,
+    role,
+    accountType: userData.accountType || role,
+  }
+}
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
@@ -29,7 +41,7 @@ export const AuthProvider = ({ children }) => {
           const response = await api.getMe()
           // Handle both real response and mock response formats
           const userData = response.user || response.data
-          setUser(userData)
+          setUser(normalizeUser(userData))
         } catch (err) {
           console.error('Failed to hydrate user:', err)
           // Token exists but user fetch failed - clear both
@@ -67,9 +79,10 @@ export const AuthProvider = ({ children }) => {
       
       localStorage.setItem('edupath_token', userToken)
       setToken(userToken)
-      setUser(userData)
+      const normalized = normalizeUser(userData)
+      setUser(normalized)
       
-      return { success: true, user: userData }
+      return { success: true, user: normalized }
     } catch (err) {
       const errorMessage = err?.message || err?.status || 'Login failed'
       setError(errorMessage)
@@ -101,9 +114,10 @@ export const AuthProvider = ({ children }) => {
       
       localStorage.setItem('edupath_token', userToken)
       setToken(userToken)
-      setUser(userData)
+      const normalized = normalizeUser({ ...userData, accountType, role: accountType })
+      setUser(normalized)
       
-      return { success: true, user: userData }
+      return { success: true, user: normalized }
     } catch (err) {
       const errorMessage = err?.message || err?.status || 'Registration failed'
       setError(errorMessage)
