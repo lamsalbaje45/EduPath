@@ -36,6 +36,13 @@ function normalizeError(error) {
         return createError(401, 'Invalid or expired token.');
     }
 
+    if (error?.name === 'MulterError') {
+        const message = error.code === 'LIMIT_FILE_SIZE'
+            ? 'Image file is too large. Maximum size is 2MB.'
+            : error.message;
+        return createError(400, message);
+    }
+
     if (error?.name === 'UnauthorizedError') {
         return createError(401, 'Authentication is required.');
     }

@@ -1,5 +1,6 @@
 import { User } from '../models/user.js';
 import { buildPaginationMetadata, buildUserQuery } from '../services/queryBuilders.js';
+import { uploadProfileImage } from '../services/fileUploadService.js';
 
 import { asyncHandler, sendError, sendPaginated, sendSuccess } from './controllerUtils.js';
 
@@ -27,6 +28,26 @@ const updateMyAccount = asyncHandler(async (req, res) => {
     }
 
     return sendSuccess(res, { message: 'Account updated successfully.', data: user });
+});
+
+const uploadMyProfileImage = asyncHandler(async (req, res) => {
+    if (!req.file) {
+        return sendError(res, { status: 400, message: 'No image file was provided.' });
+    }
+
+    const result = await uploadProfileImage(req.file, req.user.id);
+
+    const user = await User.findByIdAndUpdate(
+        req.user.id,
+        { $set: { profileImage: result.url } },
+        { new: true, runValidators: true }
+    );
+
+    if (!user) {
+        return sendError(res, { status: 404, message: 'User not found.' });
+    }
+
+    return sendSuccess(res, { message: 'Profile picture updated successfully.', data: user });
 });
 
 const listUsers = asyncHandler(async (req, res) => {
@@ -101,4 +122,5 @@ export {
     updateMyAccount,
     updateUserRole,
     updateUserStatus,
+    uploadMyProfileImage,
 };

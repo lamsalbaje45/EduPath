@@ -12,6 +12,18 @@ const inputState = (error) =>
 
 const fieldLabel = 'text-sm font-medium text-gray-900 dark:text-white'
 const errorText = 'text-red-500 text-xs'
+const hintText = 'text-gray-500 text-xs dark:text-gray-400'
+
+const PASSWORD_REQUIREMENTS = [
+  { test: (v) => v.length >= 8, message: 'At least 8 characters long' },
+  { test: (v) => /[A-Z]/.test(v), message: 'One uppercase letter (A-Z)' },
+  { test: (v) => /[a-z]/.test(v), message: 'One lowercase letter (a-z)' },
+  { test: (v) => /[0-9]/.test(v), message: 'One digit (0-9)' },
+  { test: (v) => /[!@#$%^&*]/.test(v), message: 'One special character (!@#$%^&*)' },
+]
+
+const getPasswordErrors = (password) =>
+  PASSWORD_REQUIREMENTS.filter((rule) => !rule.test(password)).map((rule) => rule.message)
 
 function Register() {
   const navigate = useNavigate()
@@ -46,8 +58,11 @@ function Register() {
 
     if (!formData.password) {
       newErrors.password = 'Password is required'
-    } else if (formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters'
+    } else {
+      const passwordErrors = getPasswordErrors(formData.password)
+      if (passwordErrors.length > 0) {
+        newErrors.password = passwordErrors
+      }
     }
 
     if (formData.password !== formData.confirmPassword) {
@@ -111,7 +126,20 @@ function Register() {
       }, 1200)
     } catch (err) {
       console.error('Registration error:', err)
-      setErrors({ submit: err?.message || 'An error occurred during registration. Please try again.' })
+      const fieldErrors = {}
+      if (Array.isArray(err?.errors)) {
+        err.errors.forEach(({ field, message }) => {
+          if (!field) return
+          fieldErrors[field] = fieldErrors[field]
+            ? [...fieldErrors[field], message]
+            : [message]
+        })
+      }
+      if (Object.keys(fieldErrors).length > 0) {
+        setErrors(fieldErrors)
+      } else {
+        setErrors({ submit: err?.message || 'An error occurred during registration. Please try again.' })
+      }
     } finally {
       setIsLoading(false)
     }
@@ -224,7 +252,21 @@ function Register() {
                   placeholder="At least 8 characters"
                   className={`${inputBase} ${inputState(errors.password)}`}
                 />
-                {errors.password && <span className={errorText}>{errors.password}</span>}
+                {errors.password ? (
+                  Array.isArray(errors.password) ? (
+                    <ul className={`${errorText} list-disc space-y-0.5 pl-4`}>
+                      {errors.password.map((msg) => (
+                        <li key={msg}>{msg}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <span className={errorText}>{errors.password}</span>
+                  )
+                ) : (
+                  <span className={hintText}>
+                    Must include uppercase, lowercase, a digit, and a special character (!@#$%^&*)
+                  </span>
+                )}
               </div>
 
               <div className="flex flex-col gap-2">

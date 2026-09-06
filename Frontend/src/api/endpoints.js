@@ -36,6 +36,12 @@ export const changePassword = (currentPassword, newPassword) =>
 
 export const updateMyAccount = (payload) => apiClient.patch('/users/me', payload)
 
+export const uploadProfileImage = (file) => {
+  const formData = new FormData()
+  formData.append('profileImage', file)
+  return apiClient.post('/users/me/profile-image', formData)
+}
+
 export const getUsers = (params = {}) => apiClient.get(`/users${toQueryString(params)}`)
 
 export const updateUserRole = (userId, role) => apiClient.patch(`/users/${userId}/role`, { role })
@@ -189,6 +195,7 @@ export default {
   getMe,
   changePassword,
   updateMyAccount,
+  uploadProfileImage,
   getUsers,
   updateUserRole,
   updateUserStatus,

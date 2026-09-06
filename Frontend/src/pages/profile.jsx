@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import * as api from "../api/endpoints";
+import { getAssetUrl } from "../api/client";
 import {
   Badge,
   Button,
@@ -61,9 +62,35 @@ function Field({ label, value, name, onChange, editing, multiline = false, place
   );
 }
 
+const ROLE_LABELS = {
+  student: "Student",
+  college_admin: "College Admin",
+  employer: "Employer",
+  instructor: "Instructor",
+  admin: "Admin",
+};
+
+const ROLE_DASHBOARD_LINKS = {
+  college_admin: { path: "/college-admin", label: "College Admin Dashboard" },
+  employer: { path: "/employer", label: "Employer Dashboard" },
+  instructor: { path: "/instructor", label: "Instructor Dashboard" },
+  admin: { path: "/admin", label: "Admin Dashboard" },
+};
+
+const MAX_AVATAR_SIZE = 2 * 1024 * 1024; // 2MB, matches backend limit
+const ALLOWED_AVATAR_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+
 function Profile() {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
+  const avatarInputRef = useRef(null);
+
+  const isStudent = (user?.role || "student") === "student";
+  const roleLabel = ROLE_LABELS[user?.role] || "Student";
+  const dashboardLink = ROLE_DASHBOARD_LINKS[user?.role];
+
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarError, setAvatarError] = useState(null);
 
   // Active Tab: "profile" | "saved_colleges" | "saved_jobs" | "saved_classes" | "applications"
   const [activeTab, setActiveTab] = useState("profile");
@@ -75,18 +102,16 @@ function Profile() {
     email: user?.email || "",
     phone: user?.phoneNumber || "",
     profileImage: user?.profileImage || "",
-    address: user?.studentProfile?.address || "Kathmandu, Nepal",
-    bio:
-      user?.studentProfile?.bio ||
-      "Aspiring software engineer who enjoys building useful products and learning new technologies.",
-    educationLevel: user?.studentProfile?.educationLevel || "Undergraduate",
-    currentCourse: user?.studentProfile?.currentCourse || "Bachelor of Science in Computer Science",
-    preferredCourses: user?.studentProfile?.preferredCourses || ["Computer Science", "Information Technology"],
-    preferredCities: user?.studentProfile?.preferredCities || ["Kathmandu", "Pokhara", "Remote"],
-    skills: user?.studentProfile?.skills || ["React", "JavaScript", "Tailwind CSS", "Node.js"],
-    careerInterests: user?.studentProfile?.careerInterests || ["Web Development", "UI/UX Design", "Software Engineering"],
-    preferredOpportunityType: user?.studentProfile?.preferredOpportunityType || "Internship / Entry-level",
-    portfolioLinks: user?.studentProfile?.portfolioLinks || ["https://github.com/"],
+    address: user?.studentProfile?.address || "",
+    bio: user?.studentProfile?.bio || "",
+    educationLevel: user?.studentProfile?.educationLevel || "",
+    currentCourse: user?.studentProfile?.currentCourse || "",
+    preferredCourses: user?.studentProfile?.preferredCourses || [],
+    preferredCities: user?.studentProfile?.preferredCities || [],
+    skills: user?.studentProfile?.skills || [],
+    careerInterests: user?.studentProfile?.careerInterests || [],
+    preferredOpportunityType: user?.studentProfile?.preferredOpportunityType || "",
+    portfolioLinks: user?.studentProfile?.portfolioLinks || [],
   });
 
   const [draft, setDraft] = useState(profileData);
@@ -106,21 +131,21 @@ function Profile() {
   useEffect(() => {
     if (user) {
       const initial = {
-        firstName: user.firstName || profileData.firstName,
-        lastName: user.lastName || profileData.lastName,
-        email: user.email || profileData.email,
-        phone: user.phoneNumber || profileData.phone,
-        profileImage: user.profileImage || profileData.profileImage,
-        address: user.studentProfile?.address || profileData.address,
-        bio: user.studentProfile?.bio || profileData.bio,
-        educationLevel: user.studentProfile?.educationLevel || profileData.educationLevel,
-        currentCourse: user.studentProfile?.currentCourse || profileData.currentCourse,
-        preferredCourses: user.studentProfile?.preferredCourses || profileData.preferredCourses,
-        preferredCities: user.studentProfile?.preferredCities || profileData.preferredCities,
-        skills: user.studentProfile?.skills || profileData.skills,
-        careerInterests: user.studentProfile?.careerInterests || profileData.careerInterests,
-        preferredOpportunityType: user.studentProfile?.preferredOpportunityType || profileData.preferredOpportunityType,
-        portfolioLinks: user.studentProfile?.portfolioLinks || profileData.portfolioLinks,
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
+        email: user.email || "",
+        phone: user.phoneNumber || "",
+        profileImage: user.profileImage || "",
+        address: user.studentProfile?.address || "",
+        bio: user.studentProfile?.bio || "",
+        educationLevel: user.studentProfile?.educationLevel || "",
+        currentCourse: user.studentProfile?.currentCourse || "",
+        preferredCourses: user.studentProfile?.preferredCourses || [],
+        preferredCities: user.studentProfile?.preferredCities || [],
+        skills: user.studentProfile?.skills || [],
+        careerInterests: user.studentProfile?.careerInterests || [],
+        preferredOpportunityType: user.studentProfile?.preferredOpportunityType || "",
+        portfolioLinks: user.studentProfile?.portfolioLinks || [],
       };
       setProfileData(initial);
       setDraft(initial);
@@ -189,7 +214,10 @@ function Profile() {
       fullName: `${draft.firstName} ${draft.lastName}`.trim(),
       phoneNumber: draft.phone,
       profileImage: draft.profileImage,
-      studentProfile: {
+    };
+
+    if (isStudent) {
+      payload.studentProfile = {
         educationLevel: draft.educationLevel,
         currentCourse: draft.currentCourse,
         preferredCourses: Array.isArray(draft.preferredCourses) ? draft.preferredCourses : [],
@@ -200,12 +228,13 @@ function Profile() {
         portfolioLinks: Array.isArray(draft.portfolioLinks) ? draft.portfolioLinks : [],
         bio: draft.bio,
         address: draft.address,
-      },
-    };
+      };
+    }
 
     try {
-      await api.updateProfile(payload);
+      const result = await api.updateProfile(payload);
       setProfileData(draft);
+      updateUser(result?.data);
       setEditing(false);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
@@ -214,6 +243,41 @@ function Profile() {
       setSaveError(err?.message || "Failed to save profile changes. Please try again.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleAvatarButtonClick = () => {
+    avatarInputRef.current?.click();
+  };
+
+  const handleAvatarFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+
+    setAvatarError(null);
+
+    if (!ALLOWED_AVATAR_TYPES.includes(file.type)) {
+      setAvatarError("Please choose a JPEG, PNG, GIF, or WebP image.");
+      return;
+    }
+    if (file.size > MAX_AVATAR_SIZE) {
+      setAvatarError("Image must be smaller than 2MB.");
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      const result = await api.uploadProfileImage(file);
+      const newImageUrl = result?.data?.profileImage;
+      setProfileData((prev) => ({ ...prev, profileImage: newImageUrl }));
+      setDraft((prev) => ({ ...prev, profileImage: newImageUrl }));
+      updateUser(result?.data);
+    } catch (err) {
+      console.error("Failed to upload profile picture:", err);
+      setAvatarError(err?.message || "Failed to upload profile picture. Please try again.");
+    } finally {
+      setUploadingAvatar(false);
     }
   };
 
@@ -251,13 +315,15 @@ function Profile() {
         <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.18em] text-[#5472FC]">
-              Student Portal
+              {roleLabel} Portal
             </p>
             <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">
               My Profile
             </h1>
             <p className="mt-2 text-sm text-slate-500">
-              Manage your career preferences, saved items, and applications
+              {isStudent
+                ? "Manage your career preferences, saved items, and applications"
+                : "Manage your account details and settings"}
             </p>
           </div>
 
@@ -287,22 +353,48 @@ function Profile() {
           <div className="relative px-5 pb-6 sm:px-8">
             <div className="-mt-12 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
               <div className="flex items-end gap-4">
-                {profileData.profileImage ? (
-                  <img
-                    src={profileData.profileImage}
-                    alt={fullName}
-                    className="h-24 w-24 shrink-0 rounded-2xl border-4 border-white object-cover shadow-sm"
+                <div className="relative shrink-0">
+                  {profileData.profileImage ? (
+                    <img
+                      src={getAssetUrl(profileData.profileImage)}
+                      alt={fullName}
+                      className="h-24 w-24 rounded-2xl border-4 border-white object-cover shadow-sm"
+                    />
+                  ) : (
+                    <div className="flex h-24 w-24 items-center justify-center rounded-2xl border-4 border-white bg-[#E7EEFF] text-2xl font-black text-[#2551D9] shadow-sm">
+                      {initials}
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleAvatarButtonClick}
+                    disabled={uploadingAvatar}
+                    title="Change profile picture"
+                    aria-label="Change profile picture"
+                    className="absolute -bottom-1.5 -right-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-[#5472FC] text-sm text-white shadow-md ring-2 ring-white transition-colors hover:bg-[#435DDE] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {uploadingAvatar ? (
+                      <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    ) : (
+                      "📷"
+                    )}
+                  </button>
+                  <input
+                    ref={avatarInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/gif,image/webp"
+                    onChange={handleAvatarFileChange}
+                    className="hidden"
                   />
-                ) : (
-                  <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl border-4 border-white bg-[#E7EEFF] text-2xl font-black text-[#2551D9] shadow-sm">
-                    {initials}
-                  </div>
-                )}
+                </div>
                 <div className="pb-1">
                   <h2 className="text-2xl font-black text-slate-950">{fullName}</h2>
                   <p className="mt-1 text-sm font-semibold text-slate-500">
-                    {profileData.currentCourse}
+                    {isStudent ? profileData.currentCourse || "Student" : roleLabel}
                   </p>
+                  {avatarError && (
+                    <p className="mt-1 text-xs font-semibold text-red-500">{avatarError}</p>
+                  )}
                 </div>
               </div>
 
@@ -317,59 +409,72 @@ function Profile() {
               </div>
             </div>
 
-            <div className="mt-6 grid gap-4 border-t border-slate-100 pt-5 sm:grid-cols-3">
+            <div className={`mt-6 grid gap-4 border-t border-slate-100 pt-5 ${isStudent ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
               <div>
                 <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-400">
                   Role
                 </p>
-                <p className="mt-1.5 text-sm font-bold text-slate-700">Student</p>
+                <p className="mt-1.5 text-sm font-bold text-slate-700">{roleLabel}</p>
               </div>
-              <div>
-                <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-400">
-                  Location
-                </p>
-                <p className="mt-1.5 text-sm font-bold text-slate-700">
-                  {profileData.address}
-                </p>
-              </div>
-              <div>
-                <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-400">
-                  Career Goal
-                </p>
-                <p className="mt-1.5 text-sm font-bold text-slate-700">
-                  {profileData.preferredOpportunityType}
-                </p>
-              </div>
+              {isStudent ? (
+                <>
+                  <div>
+                    <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-400">
+                      Location
+                    </p>
+                    <p className="mt-1.5 text-sm font-bold text-slate-700">
+                      {profileData.address || <span className="text-slate-400 italic">Not specified</span>}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-400">
+                      Career Goal
+                    </p>
+                    <p className="mt-1.5 text-sm font-bold text-slate-700">
+                      {profileData.preferredOpportunityType || <span className="text-slate-400 italic">Not specified</span>}
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <div>
+                  <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-400">
+                    Email
+                  </p>
+                  <p className="mt-1.5 text-sm font-bold text-slate-700">{profileData.email}</p>
+                </div>
+              )}
             </div>
           </div>
         </section>
 
         {/* Navigation Tabs */}
-        <div className="mb-6 flex border-b border-slate-200 overflow-x-auto">
-          {[
-            { id: "profile", label: "Profile Overview" },
-            { id: "saved_colleges", label: "Saved Colleges" },
-            { id: "saved_jobs", label: "Saved Opportunities" },
-            { id: "saved_classes", label: "Saved Classes" },
-            { id: "applications", label: "My Applications" },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => {
-                setActiveTab(tab.id);
-                setEditing(false);
-              }}
-              className={`whitespace-nowrap border-b-2 px-5 py-3 text-sm font-black transition-colors ${
-                activeTab === tab.id
-                  ? "border-[#5472FC] text-[#5472FC]"
-                  : "border-transparent text-slate-500 hover:text-slate-900"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        {isStudent && (
+          <div className="mb-6 flex border-b border-slate-200 overflow-x-auto">
+            {[
+              { id: "profile", label: "Profile Overview" },
+              { id: "saved_colleges", label: "Saved Colleges" },
+              { id: "saved_jobs", label: "Saved Opportunities" },
+              { id: "saved_classes", label: "Saved Classes" },
+              { id: "applications", label: "My Applications" },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  setEditing(false);
+                }}
+                className={`whitespace-nowrap border-b-2 px-5 py-3 text-sm font-black transition-colors ${
+                  activeTab === tab.id
+                    ? "border-[#5472FC] text-[#5472FC]"
+                    : "border-transparent text-slate-500 hover:text-slate-900"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Alerts */}
         {saveSuccess && (
@@ -418,200 +523,220 @@ function Profile() {
                       onChange={updateDraftField}
                       editing={editing}
                     />
-                    <Field
-                      label="Location / Address"
-                      name="address"
-                      value={displayData.address}
-                      onChange={updateDraftField}
-                      editing={editing}
-                    />
-                    <Field
-                      label="Profile Avatar URL"
-                      name="profileImage"
-                      value={displayData.profileImage}
-                      onChange={updateDraftField}
-                      editing={editing}
-                      placeholder="https://..."
-                    />
-                  </div>
-                  <div className="mt-5">
-                    <Field
-                      label="Bio & Summary"
-                      name="bio"
-                      value={displayData.bio}
-                      onChange={updateDraftField}
-                      editing={editing}
-                      multiline
-                    />
-                  </div>
-                </section>
-
-                {/* Education & Career Preferences */}
-                <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-                  <h2 className="text-lg font-black text-slate-950">
-                    Education & Career Preferences
-                  </h2>
-                  <div className="mt-5 grid gap-5 sm:grid-cols-2">
-                    <Field
-                      label="Education Level"
-                      name="educationLevel"
-                      value={displayData.educationLevel}
-                      onChange={updateDraftField}
-                      editing={editing}
-                    />
-                    <Field
-                      label="Current Course / Degree"
-                      name="currentCourse"
-                      value={displayData.currentCourse}
-                      onChange={updateDraftField}
-                      editing={editing}
-                    />
-                    <Field
-                      label="Preferred Opportunity Type"
-                      name="preferredOpportunityType"
-                      value={displayData.preferredOpportunityType}
-                      onChange={updateDraftField}
-                      editing={editing}
-                    />
-                  </div>
-
-                  {/* Multi-value fields */}
-                  <div className="mt-5 space-y-5">
-                    {editing ? (
-                      <div>
-                        <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-400">
-                          Preferred Courses (comma-separated)
-                        </p>
-                        <input
-                          value={(draft.preferredCourses || []).join(", ")}
-                          onChange={(e) => updateDraftArray("preferredCourses", e.target.value)}
-                          className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#5472FC] focus:ring-2 focus:ring-[#E7EEFF]"
-                        />
-                      </div>
-                    ) : (
-                      <div>
-                        <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-400">
-                          Preferred Courses
-                        </p>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {(displayData.preferredCourses || []).map((c) => (
-                            <Badge key={c} variant="secondary" size="md">
-                              {c}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {editing ? (
-                      <div>
-                        <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-400">
-                          Preferred Cities (comma-separated)
-                        </p>
-                        <input
-                          value={(draft.preferredCities || []).join(", ")}
-                          onChange={(e) => updateDraftArray("preferredCities", e.target.value)}
-                          className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#5472FC] focus:ring-2 focus:ring-[#E7EEFF]"
-                        />
-                      </div>
-                    ) : (
-                      <div>
-                        <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-400">
-                          Preferred Cities
-                        </p>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {(displayData.preferredCities || []).map((city) => (
-                            <span
-                              key={city}
-                              className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-bold text-slate-600"
-                            >
-                              📍 {city}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
+                    {isStudent && (
+                      <Field
+                        label="Location / Address"
+                        name="address"
+                        value={displayData.address}
+                        onChange={updateDraftField}
+                        editing={editing}
+                      />
                     )}
                   </div>
+                  {isStudent && (
+                    <div className="mt-5">
+                      <Field
+                        label="Bio & Summary"
+                        name="bio"
+                        value={displayData.bio}
+                        onChange={updateDraftField}
+                        editing={editing}
+                        multiline
+                      />
+                    </div>
+                  )}
                 </section>
+
+                {/* Education & Career Preferences - students only */}
+                {isStudent && (
+                  <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                    <h2 className="text-lg font-black text-slate-950">
+                      Education & Career Preferences
+                    </h2>
+                    <div className="mt-5 grid gap-5 sm:grid-cols-2">
+                      <Field
+                        label="Education Level"
+                        name="educationLevel"
+                        value={displayData.educationLevel}
+                        onChange={updateDraftField}
+                        editing={editing}
+                      />
+                      <Field
+                        label="Current Course / Degree"
+                        name="currentCourse"
+                        value={displayData.currentCourse}
+                        onChange={updateDraftField}
+                        editing={editing}
+                      />
+                      <Field
+                        label="Preferred Opportunity Type"
+                        name="preferredOpportunityType"
+                        value={displayData.preferredOpportunityType}
+                        onChange={updateDraftField}
+                        editing={editing}
+                      />
+                    </div>
+
+                    {/* Multi-value fields */}
+                    <div className="mt-5 space-y-5">
+                      {editing ? (
+                        <div>
+                          <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-400">
+                            Preferred Courses (comma-separated)
+                          </p>
+                          <input
+                            value={(draft.preferredCourses || []).join(", ")}
+                            onChange={(e) => updateDraftArray("preferredCourses", e.target.value)}
+                            className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#5472FC] focus:ring-2 focus:ring-[#E7EEFF]"
+                          />
+                        </div>
+                      ) : (
+                        <div>
+                          <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-400">
+                            Preferred Courses
+                          </p>
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {(displayData.preferredCourses || []).map((c) => (
+                              <Badge key={c} variant="secondary" size="md">
+                                {c}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {editing ? (
+                        <div>
+                          <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-400">
+                            Preferred Cities (comma-separated)
+                          </p>
+                          <input
+                            value={(draft.preferredCities || []).join(", ")}
+                            onChange={(e) => updateDraftArray("preferredCities", e.target.value)}
+                            className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#5472FC] focus:ring-2 focus:ring-[#E7EEFF]"
+                          />
+                        </div>
+                      ) : (
+                        <div>
+                          <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-400">
+                            Preferred Cities
+                          </p>
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {(displayData.preferredCities || []).map((city) => (
+                              <span
+                                key={city}
+                                className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-bold text-slate-600"
+                              >
+                                📍 {city}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </section>
+                )}
               </div>
 
               {/* Sidebar */}
               <aside className="space-y-6">
-                {/* Skills Section */}
-                <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-                  <h2 className="text-lg font-black text-slate-950">Skills</h2>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Skills used to match suitable jobs and courses.
-                  </p>
-                  {editing ? (
-                    <div className="mt-4">
-                      <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-400">
-                        Skills (comma-separated)
+                {isStudent ? (
+                  <>
+                    {/* Skills Section */}
+                    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                      <h2 className="text-lg font-black text-slate-950">Skills</h2>
+                      <p className="mt-1 text-xs text-slate-500">
+                        Skills used to match suitable jobs and courses.
                       </p>
-                      <input
-                        value={(draft.skills || []).join(", ")}
-                        onChange={(e) => updateDraftArray("skills", e.target.value)}
-                        className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#5472FC] focus:ring-2 focus:ring-[#E7EEFF]"
-                      />
-                    </div>
-                  ) : (
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {(displayData.skills || []).map((skill) => (
-                        <span
-                          key={skill}
-                          className="rounded-full bg-[#E7EEFF] px-3 py-1.5 text-xs font-black text-[#2551D9]"
-                        >
-                          {skill}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </section>
+                      {editing ? (
+                        <div className="mt-4">
+                          <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-400">
+                            Skills (comma-separated)
+                          </p>
+                          <input
+                            value={(draft.skills || []).join(", ")}
+                            onChange={(e) => updateDraftArray("skills", e.target.value)}
+                            className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#5472FC] focus:ring-2 focus:ring-[#E7EEFF]"
+                          />
+                        </div>
+                      ) : (
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          {(displayData.skills || []).map((skill) => (
+                            <span
+                              key={skill}
+                              className="rounded-full bg-[#E7EEFF] px-3 py-1.5 text-xs font-black text-[#2551D9]"
+                            >
+                              {skill}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </section>
 
-                {/* Career Interests Section */}
-                <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-                  <h2 className="text-lg font-black text-slate-950">Career Interests</h2>
-                  {editing ? (
-                    <div className="mt-4">
-                      <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-400">
-                        Interests (comma-separated)
+                    {/* Career Interests Section */}
+                    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                      <h2 className="text-lg font-black text-slate-950">Career Interests</h2>
+                      {editing ? (
+                        <div className="mt-4">
+                          <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-400">
+                            Interests (comma-separated)
+                          </p>
+                          <input
+                            value={(draft.careerInterests || []).join(", ")}
+                            onChange={(e) => updateDraftArray("careerInterests", e.target.value)}
+                            className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#5472FC] focus:ring-2 focus:ring-[#E7EEFF]"
+                          />
+                        </div>
+                      ) : (
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          {(displayData.careerInterests || []).map((interest) => (
+                            <span
+                              key={interest}
+                              className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600"
+                            >
+                              {interest}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </section>
+
+                    {/* CV Maker Promo Card */}
+                    <section className="rounded-2xl border border-[#D9E2FF] bg-[#F6F8FF] p-5 sm:p-6">
+                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#2551D9]">
+                        Resume & Portfolio
                       </p>
-                      <input
-                        value={(draft.careerInterests || []).join(", ")}
-                        onChange={(e) => updateDraftArray("careerInterests", e.target.value)}
-                        className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#5472FC] focus:ring-2 focus:ring-[#E7EEFF]"
-                      />
-                    </div>
-                  ) : (
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {(displayData.careerInterests || []).map((interest) => (
-                        <span
-                          key={interest}
-                          className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600"
-                        >
-                          {interest}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </section>
-
-                {/* CV Maker Promo Card */}
-                <section className="rounded-2xl border border-[#D9E2FF] bg-[#F6F8FF] p-5 sm:p-6">
-                  <p className="text-xs font-black uppercase tracking-[0.16em] text-[#2551D9]">
-                    Resume & Portfolio
-                  </p>
-                  <h2 className="mt-3 text-lg font-black leading-6 text-slate-950">
-                    Build your professional CV to stand out in job applications.
-                  </h2>
-                  <button
-                    type="button"
-                    onClick={() => navigate("/cv-maker")}
-                    className="mt-5 rounded-xl bg-[#5472FC] px-4 py-2.5 text-xs font-black text-white transition-colors hover:bg-[#435DDE]"
-                  >
-                    Open CV Maker ↗
-                  </button>
-                </section>
+                      <h2 className="mt-3 text-lg font-black leading-6 text-slate-950">
+                        Build your professional CV to stand out in job applications.
+                      </h2>
+                      <button
+                        type="button"
+                        onClick={() => navigate("/cv-maker")}
+                        className="mt-5 rounded-xl bg-[#5472FC] px-4 py-2.5 text-xs font-black text-white transition-colors hover:bg-[#435DDE]"
+                      >
+                        Open CV Maker ↗
+                      </button>
+                    </section>
+                  </>
+                ) : (
+                  dashboardLink && (
+                    <section className="rounded-2xl border border-[#D9E2FF] bg-[#F6F8FF] p-5 sm:p-6">
+                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#2551D9]">
+                        {roleLabel} Tools
+                      </p>
+                      <h2 className="mt-3 text-lg font-black leading-6 text-slate-950">
+                        Manage your listings and view activity from your dashboard.
+                      </h2>
+                      <button
+                        type="button"
+                        onClick={() => navigate(dashboardLink.path)}
+                        className="mt-5 rounded-xl bg-[#5472FC] px-4 py-2.5 text-xs font-black text-white transition-colors hover:bg-[#435DDE]"
+                      >
+                        Open {dashboardLink.label} ↗
+                      </button>
+                    </section>
+                  )
+                )}
               </aside>
             </div>
 

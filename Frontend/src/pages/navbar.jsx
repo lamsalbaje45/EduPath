@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { getAssetUrl } from '../api/client'
 
 const navItems = [
   { label: 'Discover', to: '/' },
@@ -182,7 +183,7 @@ function Navbar() {
               >
                 {user?.profileImage ? (
                   <img
-                    src={user.profileImage}
+                    src={getAssetUrl(user.profileImage)}
                     alt={`${user.firstName || 'User'} avatar`}
                     className="h-7 w-7 rounded-lg object-cover"
                   />
