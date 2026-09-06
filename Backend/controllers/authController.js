@@ -12,7 +12,11 @@ import crypto from 'crypto';
 import { asyncHandler, sendCreated, sendError, sendSuccess } from './controllerUtils.js';
 
 function issueToken(user) {
-    return generateToken({ id: user._id, role: user.role, email: user.email }, getJwtSecret());
+    return generateToken(
+        { id: user._id, role: user.role, email: user.email },
+        getJwtSecret(),
+        { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+    );
 }
 
 function toSafeUser(user) {

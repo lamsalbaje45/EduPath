@@ -1,6 +1,7 @@
 import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
+import helmet from 'helmet';
 import mongoose from 'mongoose';
 
 import { connectDatabase } from './config/database.js';
@@ -13,8 +14,9 @@ dotenv.config();
 const PORT = process.env.PORT || 3000;
 const app = express();
 
+app.use(helmet());
 app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:5173' }));
-app.use(express.json());
+app.use(express.json({ limit: '100kb' }));
 app.use('/api', apiRouter);
 
 app.get('/', (req, res) => sendSuccess(res, { message: 'EduPath backend is running.' }));

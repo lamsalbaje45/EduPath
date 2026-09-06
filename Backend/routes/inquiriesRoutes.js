@@ -2,6 +2,7 @@ import { Router } from 'express';
 
 import { ROLES } from '../config/roles.js';
 import { requireRole } from '../middleware/authorization.js';
+import { writeLimiter } from '../middleware/rateLimiter.js';
 import {
     createInquiry,
     deleteInquiry,
@@ -18,7 +19,7 @@ import {
 
 const inquiriesRouter = Router();
 
-inquiriesRouter.post('/', requireRole(ROLES.STUDENT), validateInquiryCreateBody, createInquiry);
+inquiriesRouter.post('/', writeLimiter, requireRole(ROLES.STUDENT), validateInquiryCreateBody, createInquiry);
 inquiriesRouter.get('/me', listMyInquiries);
 inquiriesRouter.get('/received', listReceivedInquiries);
 inquiriesRouter.get('/:id', validateObjectId('id'), getInquiryById);

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 
 import { authenticateToken } from '../middleware/auth.js';
+import { authLimiter } from '../middleware/rateLimiter.js';
 import {
     changePassword,
     confirmPasswordReset,
@@ -19,6 +20,8 @@ import {
 } from '../validators/requestValidators.js';
 
 const authRouter = Router();
+
+authRouter.use(authLimiter);
 
 authRouter.post('/register', validateRegisterBody, register);
 authRouter.post('/login', validateLoginBody, login);
