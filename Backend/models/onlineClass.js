@@ -60,6 +60,10 @@ const onlineClassSchema = new Schema(
             type: String,
             trim: true,
         },
+        thumbnail: {
+            type: String,
+            trim: true,
+        },
         owner: {
             type: Schema.Types.ObjectId,
             ref: 'User',

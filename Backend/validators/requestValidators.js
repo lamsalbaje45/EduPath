@@ -178,6 +178,7 @@ const validateCollegeBody = (requireFields) => createValidatorChain([
 const validateOpportunityBody = (requireFields) => createValidatorChain([
     body('title')[requireFields ? 'exists' : 'optional']().trim().isLength({ min: 2, max: 200 }).withMessage('Title must be between 2 and 200 characters.'),
     body('companyName')[requireFields ? 'exists' : 'optional']().trim().isLength({ min: 1, max: 150 }).withMessage('Company name is required.'),
+    body('companyLogo').optional().trim().isLength({ max: 500 }).withMessage('Company logo URL is too long.'),
     body('type')[requireFields ? 'exists' : 'optional']().isIn(['job', 'internship']).withMessage('Type must be job or internship.'),
     body('location').optional().trim().isLength({ max: 150 }).withMessage('Location is invalid.'),
     body('workMode').optional().isIn(['onsite', 'remote', 'hybrid']).withMessage('Work mode must be onsite, remote, or hybrid.'),
@@ -204,6 +205,7 @@ const validateClassBody = (requireFields) => createValidatorChain([
     body('startDate').optional().isISO8601().withMessage('Start date must be a valid ISO date.'),
     body('schedule').optional().trim().isLength({ max: 200 }).withMessage('Schedule is invalid.'),
     body('enrollmentLink').optional().trim().isLength({ max: 300 }).withMessage('Enrollment link is invalid.'),
+    body('thumbnail').optional().trim().isLength({ max: 500 }).withMessage('Thumbnail URL is too long.'),
 ]);
 
 const validateApprovalBody = createValidatorChain([

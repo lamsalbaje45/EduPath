@@ -7,6 +7,7 @@ import { asyncHandler, isDatabaseConnected, sendCreated, sendError, sendPaginate
 const CREATABLE_FIELDS = [
     'title',
     'companyName',
+    'companyLogo',
     'type',
     'location',
     'workMode',

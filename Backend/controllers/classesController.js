@@ -17,6 +17,7 @@ const CREATABLE_FIELDS = [
     'startDate',
     'schedule',
     'enrollmentLink',
+    'thumbnail',
 ];
 
 const listClasses = asyncHandler(async (req, res) => {

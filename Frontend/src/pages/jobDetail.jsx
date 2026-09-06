@@ -241,9 +241,18 @@ function JobDetail() {
         <div className="mx-auto max-w-5xl px-5 py-10 sm:px-8">
           <div className="flex flex-col items-start justify-between gap-6 md:flex-row">
             <div className="max-w-3xl">
-              <p className="mb-2 text-lg font-semibold text-gray-600">
-                {opportunity.companyName}
-              </p>
+              <div className="mb-2 flex items-center gap-3">
+                {opportunity.companyLogo && (
+                  <img
+                    src={opportunity.companyLogo}
+                    alt={opportunity.companyName}
+                    className="h-12 w-12 shrink-0 rounded-xl object-cover"
+                  />
+                )}
+                <p className="text-lg font-semibold text-gray-600">
+                  {opportunity.companyName}
+                </p>
+              </div>
               <h1 className="text-4xl font-black text-slate-950">
                 {opportunity.title}
               </h1>

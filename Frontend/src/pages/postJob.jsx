@@ -40,6 +40,7 @@ function PostJob() {
   const [formData, setFormData] = useState({
     title: "",
     companyName: "",
+    companyLogo: "",
     type: "job",
     location: "",
     workMode: "remote",
@@ -193,6 +194,7 @@ function PostJob() {
                   setFormData({
                     title: "",
                     companyName: "",
+                    companyLogo: "",
                     type: "job",
                     location: "",
                     workMode: "remote",
@@ -266,6 +268,16 @@ function PostJob() {
                   error={errors.companyName}
                   required
                 />
+                <Input
+                  label="Company Logo URL"
+                  name="companyLogo"
+                  placeholder="https://.../logo.png"
+                  value={formData.companyLogo}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
                 <Select
                   label="Opportunity Type *"
                   name="type"
@@ -274,9 +286,6 @@ function PostJob() {
                   onChange={handleChange}
                   error={errors.type}
                 />
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
                 <Select
                   label="Work Mode"
                   name="workMode"
@@ -284,14 +293,15 @@ function PostJob() {
                   value={formData.workMode}
                   onChange={handleChange}
                 />
-                <Input
-                  label="Location"
-                  name="location"
-                  placeholder="e.g. Kathmandu, Lalitpur, or Remote"
-                  value={formData.location}
-                  onChange={handleChange}
-                />
               </div>
+
+              <Input
+                label="Location"
+                name="location"
+                placeholder="e.g. Kathmandu, Lalitpur, or Remote"
+                value={formData.location}
+                onChange={handleChange}
+              />
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <Input

@@ -16,6 +16,10 @@ const opportunitySchema = new Schema(
             trim: true,
             index: true,
         },
+        companyLogo: {
+            type: String,
+            trim: true,
+        },
         type: {
             type: String,
             required: true,

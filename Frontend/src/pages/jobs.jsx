@@ -485,9 +485,18 @@ function JobsListing() {
                       >
                         <div>
                           {/* Title & Company */}
-                          <h2 className="mb-1 text-lg font-black text-slate-950">
-                            {opportunity.title}
-                          </h2>
+                          <div className="mb-1 flex items-center gap-2">
+                            {opportunity.companyLogo && (
+                              <img
+                                src={opportunity.companyLogo}
+                                alt={opportunity.companyName}
+                                className="h-8 w-8 shrink-0 rounded-lg object-cover"
+                              />
+                            )}
+                            <h2 className="text-lg font-black text-slate-950">
+                              {opportunity.title}
+                            </h2>
+                          </div>
                           <p className="mb-3 text-sm font-semibold text-gray-600">
                             {opportunity.companyName}
                           </p>
