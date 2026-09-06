@@ -127,6 +127,10 @@ function buildCollegeQuery(query = {}) {
         filters.push({ approvalStatus: String(query.approvalStatus).trim() });
     }
 
+    if (query.owner) {
+        filters.push({ owner: query.owner });
+    }
+
     if (query.affiliation) {
         filters.push({ affiliation: new RegExp(escapeRegex(String(query.affiliation).trim()), 'i') });
     }
@@ -283,6 +287,10 @@ function buildClassQuery(query = {}) {
 
     if (query.approvalStatus) {
         filters.push({ approvalStatus: String(query.approvalStatus).trim() });
+    }
+
+    if (query.owner) {
+        filters.push({ owner: query.owner });
     }
 
     const priceMin = toNumber(query.priceMin);

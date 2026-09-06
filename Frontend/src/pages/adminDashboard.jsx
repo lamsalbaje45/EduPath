@@ -719,13 +719,13 @@ function AdminDashboard() {
                       <tbody className="divide-y divide-slate-100 font-bold">
                         {inquiries.map((inq) => {
                           const inqId = inq._id || inq.id;
-                          const inqStatus = inq.status || "pending";
+                          const inqStatus = inq.status || "new";
                           const isActing = rowActionId === `inq_${inqId}`;
 
                           return (
                             <tr key={inqId} className="hover:bg-slate-50">
                               <td className="p-4">
-                                <p className="font-black text-slate-950">{inq.collegeName || "General Inquiry"}</p>
+                                <p className="font-black text-slate-950">{inq.targetName || "General Inquiry"}</p>
                                 <p className="text-[11px] text-slate-500">Submitted on {inq.createdAt ? new Date(inq.createdAt).toLocaleDateString() : "Recent"}</p>
                               </td>
                               <td className="p-4 max-w-xs truncate text-slate-700">
@@ -738,7 +738,7 @@ function AdminDashboard() {
                                   onChange={(e) => handleInquiryStatusChange(inqId, e.target.value)}
                                   className="rounded-xl border border-slate-200 bg-white px-2.5 py-1 text-xs font-black text-slate-800 focus:border-[#5472FC] focus:outline-none"
                                 >
-                                  <option value="pending">Pending</option>
+                                  <option value="new">New</option>
                                   <option value="read">Read</option>
                                   <option value="replied">Replied</option>
                                   <option value="closed">Closed</option>
@@ -810,7 +810,8 @@ function AdminDashboard() {
               Inquiry Details
             </h3>
             <div className="rounded-xl bg-slate-50 p-4 border border-slate-100 text-xs text-slate-800 space-y-2">
-              <p><strong>Target:</strong> {viewingInquiry.collegeName || "General Platform"}</p>
+              <p><strong>Target:</strong> {viewingInquiry.targetName || "General Platform"}</p>
+              <p><strong>From:</strong> {viewingInquiry.studentName} ({viewingInquiry.email})</p>
               <p><strong>Date:</strong> {viewingInquiry.createdAt ? new Date(viewingInquiry.createdAt).toLocaleString() : "N/A"}</p>
               <p className="pt-2 font-bold">Message:</p>
               <p className="italic leading-relaxed text-slate-900">"{viewingInquiry.message}"</p>

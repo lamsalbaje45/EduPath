@@ -18,11 +18,14 @@ import OnlineClassDetail from "./pages/onlineClassDetail";
 import CvMaker from "./pages/cvMaker";
 import ListCollege from "./pages/listCollege";
 import PostJob from "./pages/postJob";
+import PostClass from "./pages/postClass";
 import Applications from "./pages/applications";
 import NotFound from "./pages/notFound";
 import Unauthorized from "./pages/unauthorized";
 import EmployerDashboard from "./pages/employerDashboard";
 import AdminDashboard from "./pages/adminDashboard";
+import CollegeAdminDashboard from "./pages/collegeAdminDashboard";
+import InstructorDashboard from "./pages/instructorDashboard";
 import { PlaceholderPage } from "./pages/placeholder";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -99,6 +102,24 @@ function AppRoutes() {
           }
         />
 
+        <Route
+          path="/college-admin"
+          element={
+            <ProtectedRoute allowedRoles={["college_admin"]}>
+              <CollegeAdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/instructor"
+          element={
+            <ProtectedRoute allowedRoles={["instructor"]}>
+              <InstructorDashboard />
+            </ProtectedRoute>
+          }
+        />
+
         {/* Partner submission routes - role-gated to match backend authorization */}
         <Route
           path="/list-college"
@@ -113,6 +134,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute allowedRoles={["employer", "admin"]}>
               <PostJob />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/post-class"
+          element={
+            <ProtectedRoute allowedRoles={["instructor", "admin"]}>
+              <PostClass />
             </ProtectedRoute>
           }
         />

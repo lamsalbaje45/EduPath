@@ -10,9 +10,9 @@ import { buildPagination, buildPaginationMetadata } from '../services/queryBuild
 import { asyncHandler, sendCreated, sendError, sendPaginated, sendSuccess } from './controllerUtils.js';
 
 const TARGET_TYPE_CONFIG = {
-    college: { model: College, ownerField: 'owner', ownerRole: ROLES.COLLEGE_ADMIN },
-    employer: { model: Opportunity, ownerField: 'employer', ownerRole: ROLES.EMPLOYER },
-    instructor: { model: OnlineClass, ownerField: 'owner', ownerRole: ROLES.INSTRUCTOR },
+    college: { model: College, ownerField: 'owner', ownerRole: ROLES.COLLEGE_ADMIN, titleField: 'collegeName' },
+    employer: { model: Opportunity, ownerField: 'employer', ownerRole: ROLES.EMPLOYER, titleField: 'title' },
+    instructor: { model: OnlineClass, ownerField: 'owner', ownerRole: ROLES.INSTRUCTOR, titleField: 'classTitle' },
 };
 
 async function resolveTargetOwner(targetType, targetRecordId) {
@@ -24,6 +24,41 @@ async function resolveTargetOwner(targetType, targetRecordId) {
     }
 
     return record[config.ownerField] ? String(record[config.ownerField]) : null;
+}
+
+// Attaches a `targetName` (college name / job title / class title) to each inquiry so the
+// UI doesn't have to show a bare ObjectId for what the inquiry is about.
+async function attachTargetNames(inquiries) {
+    const idsByType = {};
+
+    inquiries.forEach((inquiry) => {
+        if (!idsByType[inquiry.targetType]) {
+            idsByType[inquiry.targetType] = new Set();
+        }
+        idsByType[inquiry.targetType].add(String(inquiry.targetRecord));
+    });
+
+    const namesByTypeAndId = {};
+
+    await Promise.all(Object.entries(idsByType).map(async ([targetType, idSet]) => {
+        const config = TARGET_TYPE_CONFIG[targetType];
+        const records = await config.model.find({ _id: { $in: Array.from(idSet) } })
+            .select(config.titleField)
+            .lean();
+
+        namesByTypeAndId[targetType] = {};
+        records.forEach((record) => {
+            namesByTypeAndId[targetType][String(record._id)] = record[config.titleField];
+        });
+    }));
+
+    return inquiries.map((inquiry) => {
+        const plain = inquiry.toObject ? inquiry.toObject() : inquiry;
+        return {
+            ...plain,
+            targetName: namesByTypeAndId[plain.targetType]?.[String(plain.targetRecord)] || null,
+        };
+    });
 }
 
 const createInquiry = asyncHandler(async (req, res) => {
@@ -66,7 +101,7 @@ const listMyInquiries = asyncHandler(async (req, res) => {
 
     return sendPaginated(res, {
         message: 'Your inquiries retrieved successfully.',
-        data: inquiries,
+        data: await attachTargetNames(inquiries),
         meta: buildPaginationMetadata({ page, limit, total }),
     });
 });
@@ -101,7 +136,7 @@ const listReceivedInquiries = asyncHandler(async (req, res) => {
 
     return sendPaginated(res, {
         message: 'Received inquiries retrieved successfully.',
-        data: inquiries,
+        data: await attachTargetNames(inquiries),
         meta: buildPaginationMetadata({ page, limit, total }),
     });
 });

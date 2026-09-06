@@ -19,6 +19,8 @@ function Navbar() {
   const role = user?.role || user?.accountType || 'student'
   const isAdmin = role === 'admin'
   const isEmployer = role === 'employer'
+  const isCollegeAdmin = role === 'college_admin'
+  const isInstructor = role === 'instructor'
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -115,22 +117,58 @@ function Navbar() {
               Employer
             </NavLink>
           )}
+          {isCollegeAdmin && (
+            <NavLink
+              to="/college-admin"
+              className={({ isActive }) =>
+                `text-xs font-bold transition-colors hover:text-[#2551D9] focus:outline-none focus:ring-2 focus:ring-[#5472FC] focus:ring-offset-2 rounded-lg px-2 py-1 ${
+                  isActive ? 'text-[#2551D9]' : 'text-amber-600 font-extrabold'
+                }`
+              }
+            >
+              College Admin
+            </NavLink>
+          )}
+          {isInstructor && (
+            <NavLink
+              to="/instructor"
+              className={({ isActive }) =>
+                `text-xs font-bold transition-colors hover:text-[#2551D9] focus:outline-none focus:ring-2 focus:ring-[#5472FC] focus:ring-offset-2 rounded-lg px-2 py-1 ${
+                  isActive ? 'text-[#2551D9]' : 'text-pink-600 font-extrabold'
+                }`
+              }
+            >
+              Instructor
+            </NavLink>
+          )}
         </div>
 
         {/* Desktop Right Action Buttons / User Menu */}
         <div className="hidden min-w-fit items-center gap-3 lg:flex">
-          <Link
-            to="/list-college"
-            className="rounded-xl border border-[#5472FC] bg-white px-4 py-2 text-xs font-black text-[#5472FC] shadow-sm transition-colors hover:bg-[#5472FC] hover:text-white focus:outline-none focus:ring-2 focus:ring-[#5472FC] focus:ring-offset-2"
-          >
-            List College
-          </Link>
-          <Link
-            to="/post-job"
-            className="rounded-xl bg-[#5472FC] px-4 py-2 text-xs font-black text-white shadow-sm transition-colors hover:bg-[#435DDE] focus:outline-none focus:ring-2 focus:ring-[#5472FC] focus:ring-offset-2"
-          >
-            Post Job
-          </Link>
+          {isCollegeAdmin && (
+            <Link
+              to="/list-college"
+              className="rounded-xl border border-[#5472FC] bg-white px-4 py-2 text-xs font-black text-[#5472FC] shadow-sm transition-colors hover:bg-[#5472FC] hover:text-white focus:outline-none focus:ring-2 focus:ring-[#5472FC] focus:ring-offset-2"
+            >
+              List College
+            </Link>
+          )}
+          {isEmployer && (
+            <Link
+              to="/post-job"
+              className="rounded-xl bg-[#5472FC] px-4 py-2 text-xs font-black text-white shadow-sm transition-colors hover:bg-[#435DDE] focus:outline-none focus:ring-2 focus:ring-[#5472FC] focus:ring-offset-2"
+            >
+              Post Job
+            </Link>
+          )}
+          {isInstructor && (
+            <Link
+              to="/post-class"
+              className="rounded-xl bg-[#5472FC] px-4 py-2 text-xs font-black text-white shadow-sm transition-colors hover:bg-[#435DDE] focus:outline-none focus:ring-2 focus:ring-[#5472FC] focus:ring-offset-2"
+            >
+              Post Class
+            </Link>
+          )}
 
           {/* User Menu Dropdown */}
           {isAuthenticated ? (
@@ -190,6 +228,24 @@ function Navbar() {
                         className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-emerald-700 hover:bg-emerald-50"
                       >
                         💼 Employer Dashboard
+                      </Link>
+                    )}
+                    {isCollegeAdmin && (
+                      <Link
+                        to="/college-admin"
+                        onClick={() => setDropdownOpen(false)}
+                        className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-amber-700 hover:bg-amber-50"
+                      >
+                        🏫 College Admin Dashboard
+                      </Link>
+                    )}
+                    {isInstructor && (
+                      <Link
+                        to="/instructor"
+                        onClick={() => setDropdownOpen(false)}
+                        className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-pink-700 hover:bg-pink-50"
+                      >
+                        🎓 Instructor Dashboard
                       </Link>
                     )}
 
@@ -300,6 +356,30 @@ function Navbar() {
                 }
               >
                 Employer
+              </NavLink>
+            )}
+            {isCollegeAdmin && (
+              <NavLink
+                to="/college-admin"
+                className={({ isActive }) =>
+                  `whitespace-nowrap text-xs font-bold transition-colors ${
+                    isActive ? 'text-[#2551D9]' : 'text-amber-600 font-bold'
+                  }`
+                }
+              >
+                College Admin
+              </NavLink>
+            )}
+            {isInstructor && (
+              <NavLink
+                to="/instructor"
+                className={({ isActive }) =>
+                  `whitespace-nowrap text-xs font-bold transition-colors ${
+                    isActive ? 'text-[#2551D9]' : 'text-pink-600 font-bold'
+                  }`
+                }
+              >
+                Instructor
               </NavLink>
             )}
             <NavLink

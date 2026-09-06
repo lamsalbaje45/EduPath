@@ -54,6 +54,7 @@ const validateCollegeListQuery = createValidatorChain([
     query('ratingMax').optional().isFloat({ min: 0, max: 5 }).withMessage('ratingMax must be between 0 and 5.'),
     query('feeMin').optional().isFloat({ min: 0 }).withMessage('feeMin must be a positive number.'),
     query('feeMax').optional().isFloat({ min: 0 }).withMessage('feeMax must be a positive number.'),
+    query('owner').optional().isMongoId().withMessage('owner must be a valid MongoDB ObjectId.'),
 ]);
 
 const validateOpportunityListQuery = createValidatorChain([
@@ -77,6 +78,7 @@ const validateClassListQuery = createValidatorChain([
     query('priceMin').optional().isFloat({ min: 0 }).withMessage('priceMin must be a positive number.'),
     query('priceMax').optional().isFloat({ min: 0 }).withMessage('priceMax must be a positive number.'),
     query('approvalStatus').optional().isIn(['pending', 'approved', 'rejected']).withMessage('Approval status must be pending, approved, or rejected.'),
+    query('owner').optional().isMongoId().withMessage('owner must be a valid MongoDB ObjectId.'),
 ]);
 
 const validateObjectId = (fieldName) => createValidatorChain([
