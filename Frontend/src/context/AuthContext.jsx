@@ -11,11 +11,18 @@ import * as api from '../api/endpoints'
 const AuthContext = createContext(null)
 
 // Helper to normalize user object ensuring user.role is always present
+// Backend stores a single `fullName` field; derive firstName/lastName for
+// components that display them separately.
 const normalizeUser = (userData) => {
   if (!userData) return null
   const role = userData.role || userData.accountType || 'student'
+  const fullName = userData.fullName || [userData.firstName, userData.lastName].filter(Boolean).join(' ')
+  const [firstName, ...rest] = fullName ? fullName.split(' ') : [userData.firstName || '']
   return {
     ...userData,
+    fullName,
+    firstName: userData.firstName || firstName || '',
+    lastName: userData.lastName || rest.join(' ') || '',
     role,
     accountType: userData.accountType || role,
   }
@@ -39,9 +46,7 @@ export const AuthProvider = ({ children }) => {
         setToken(storedToken)
         try {
           const response = await api.getMe()
-          // Handle both real response and mock response formats
-          const userData = response.user || response.data
-          setUser(normalizeUser(userData))
+          setUser(normalizeUser(response.data))
         } catch (err) {
           console.error('Failed to hydrate user:', err)
           // Token exists but user fetch failed - clear both
@@ -69,10 +74,9 @@ export const AuthProvider = ({ children }) => {
         throw new Error(response.message || 'Login failed')
       }
       
-      // Handle both real response and mock response formats
-      const userData = response.user || response.data?.user || response.data
-      const userToken = response.data?.token || response.token
-      
+      const userData = response.data?.user
+      const userToken = response.data?.token
+
       if (!userToken) {
         throw new Error('No token received from login')
       }
@@ -93,28 +97,27 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
-  const register = async (firstName, lastName, email, password, accountType = 'student') => {
+  const register = async (fullName, email, password, role = 'student', phoneNumber) => {
     setLoading(true)
     setError(null)
-    
+
     try {
-      const response = await api.register(firstName, lastName, email, password, accountType)
-      
+      const response = await api.register(fullName, email, password, role, phoneNumber)
+
       if (!response.success) {
         throw new Error(response.message || 'Registration failed')
       }
-      
-      // Handle both real response and mock response formats
-      const userData = response.user || response.data?.user || response.data
-      const userToken = response.data?.token || response.token
-      
+
+      const userData = response.data?.user
+      const userToken = response.data?.token
+
       if (!userToken) {
         throw new Error('No token received from registration')
       }
-      
+
       localStorage.setItem('edupath_token', userToken)
       setToken(userToken)
-      const normalized = normalizeUser({ ...userData, accountType, role: accountType })
+      const normalized = normalizeUser(userData)
       setUser(normalized)
       
       return { success: true, user: normalized }

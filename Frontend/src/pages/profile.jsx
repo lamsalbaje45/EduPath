@@ -21,9 +21,9 @@ import {
  *   skills[], careerInterests[], preferredOpportunityType, portfolioLinks[],
  *   bio, address, profileImage
  * - Tabbed navigation: Profile Overview, Saved Colleges, Saved Opportunities, Saved Classes, My Applications
- * - Pulls saved items from localStorage save adapters and renders list cards
+ * - Pulls saved items from GET /students/me/saved and renders list cards
  * - My Applications tab displaying application status badges
- * - Save profile action wired to api.updateProfile (mock adapter stub ready for PATCH /users/:id)
+ * - Save profile action wired to api.updateProfile (PATCH /users/me + PATCH /students/me)
  * - Logout button using AuthContext.logout()
  */
 
@@ -133,35 +133,13 @@ function Profile() {
     setLoadingItems(true);
 
     try {
-      if (activeTab === "saved_colleges") {
-        const storedIds = JSON.parse(localStorage.getItem(`saved_colleges_${user.id}`) || "[]");
-        if (storedIds.length > 0) {
-          const res = await api.listColleges({ limit: 100 });
-          const items = res.data?.filter((c) => storedIds.includes(c._id)) || [];
-          setSavedColleges(items);
-        } else {
-          setSavedColleges([]);
-        }
-      } else if (activeTab === "saved_jobs") {
-        const storedIds = JSON.parse(localStorage.getItem(`saved_jobs_${user.id}`) || "[]");
-        if (storedIds.length > 0) {
-          const res = await api.listOpportunities({ limit: 100 });
-          const items = res.data?.filter((j) => storedIds.includes(j._id)) || [];
-          setSavedJobs(items);
-        } else {
-          setSavedJobs([]);
-        }
-      } else if (activeTab === "saved_classes") {
-        const storedIds = JSON.parse(localStorage.getItem(`saved_classes_${user.id}`) || "[]");
-        if (storedIds.length > 0) {
-          const res = await api.listClasses({ limit: 100 });
-          const items = res.data?.filter((c) => storedIds.includes(c._id)) || [];
-          setSavedClasses(items);
-        } else {
-          setSavedClasses([]);
-        }
+      if (activeTab === "saved_colleges" || activeTab === "saved_jobs" || activeTab === "saved_classes") {
+        const res = await api.getMySavedItems();
+        setSavedColleges(res.data?.colleges || []);
+        setSavedJobs(res.data?.opportunities || []);
+        setSavedClasses(res.data?.classes || []);
       } else if (activeTab === "applications") {
-        const res = await api.getApplications();
+        const res = await api.getMyApplications();
         setApplications(res.data || []);
       }
     } catch (err) {
@@ -208,8 +186,7 @@ function Profile() {
     setSaveError(null);
 
     const payload = {
-      firstName: draft.firstName,
-      lastName: draft.lastName,
+      fullName: `${draft.firstName} ${draft.lastName}`.trim(),
       phoneNumber: draft.phone,
       profileImage: draft.profileImage,
       studentProfile: {
@@ -227,8 +204,7 @@ function Profile() {
     };
 
     try {
-      // TODO: Swapping in real PATCH /users/:id or /students/:id call is configured right inside api.updateProfile
-      await api.updateProfile(user?.id || "current", payload);
+      await api.updateProfile(payload);
       setProfileData(draft);
       setEditing(false);
       setSaveSuccess(true);

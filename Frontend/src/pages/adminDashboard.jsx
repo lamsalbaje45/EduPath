@@ -103,8 +103,8 @@ function AdminDashboard() {
         api.listOpportunities(),
         api.listClasses(),
         api.getUsers(),
-        api.getInquiries(),
-        api.getApplications(),
+        api.getReceivedInquiries(),
+        api.getReceivedApplications(),
       ]);
 
       setColleges(colRes.data || []);
@@ -161,7 +161,7 @@ function AdminDashboard() {
     }
   };
 
-  const handleUpdateClassApproval = async (id, status) => {
+  const handleUpdateOnlineClassApproval = async (id, status) => {
     setRowActionId(`cls_${id}`);
     try {
       await api.updateOnlineClassApprovalStatus(id, status);
@@ -247,18 +247,6 @@ function AdminDashboard() {
     return matchesRole && matchesStatus;
   });
 
-  const handleResetMockData = async () => {
-    if (window.confirm("Are you sure you want to reset all mock data back to seed state?")) {
-      try {
-        await api.resetMockData();
-        showToast("Mock database reset successfully!");
-        fetchAllData();
-      } catch (err) {
-        setError("Failed to reset mock database.");
-      }
-    }
-  };
-
   return (
     <main className="min-h-screen bg-[#F7F8FA] text-slate-950">
       <div className="mx-auto flex w-full max-w-7xl flex-col lg:flex-row">
@@ -294,16 +282,6 @@ function AdminDashboard() {
                 </button>
               ))}
             </nav>
-          </div>
-
-          <div className="pt-6 border-t border-slate-100 mt-6 lg:mt-0">
-            <button
-              type="button"
-              onClick={handleResetMockData}
-              className="w-full text-left px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl transition-colors flex items-center gap-2 border border-rose-100"
-            >
-              🔄 Reset Mock Database
-            </button>
           </div>
         </aside>
 

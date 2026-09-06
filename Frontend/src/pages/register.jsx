@@ -19,12 +19,11 @@ function Register() {
   const { register } = useAuth()
 
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
+    fullName: '',
     email: '',
     password: '',
     confirmPassword: '',
-    accountType: 'student',
+    role: 'student',
     agreeToTerms: false,
   })
 
@@ -35,12 +34,8 @@ function Register() {
   const validateForm = () => {
     const newErrors = {}
 
-    if (!formData.firstName.trim()) {
-      newErrors.firstName = 'First name is required'
-    }
-
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = 'Last name is required'
+    if (!formData.fullName.trim() || formData.fullName.trim().length < 2) {
+      newErrors.fullName = 'Full name must be at least 2 characters'
     }
 
     if (!formData.email.trim()) {
@@ -94,23 +89,20 @@ function Register() {
     setSuccessMessage('')
 
     try {
-      // TODO: POST /auth/register will be called via register() once backend adds endpoint
       await register(
-        formData.firstName,
-        formData.lastName,
+        formData.fullName,
         formData.email,
         formData.password,
-        formData.accountType
+        formData.role
       )
 
       setSuccessMessage('Account created successfully! Redirecting...')
       setFormData({
-        firstName: '',
-        lastName: '',
+        fullName: '',
         email: '',
         password: '',
         confirmPassword: '',
-        accountType: 'student',
+        role: 'student',
         agreeToTerms: false,
       })
 
@@ -177,32 +169,18 @@ function Register() {
             )}
 
             <form onSubmit={handleSubmit} className="mt-8 grid gap-4 md:grid-cols-2">
-              <div className="flex flex-col gap-2">
-                <label htmlFor="firstName" className={fieldLabel}>First Name</label>
+              <div className="flex flex-col gap-2 md:col-span-2">
+                <label htmlFor="fullName" className={fieldLabel}>Full Name</label>
                 <input
                   type="text"
-                  id="firstName"
-                  name="firstName"
-                  value={formData.firstName}
+                  id="fullName"
+                  name="fullName"
+                  value={formData.fullName}
                   onChange={handleChange}
-                  placeholder="FName"
-                  className={`${inputBase} ${inputState(errors.firstName)}`}
+                  placeholder="e.g. Aarav Sharma"
+                  className={`${inputBase} ${inputState(errors.fullName)}`}
                 />
-                {errors.firstName && <span className={errorText}>{errors.firstName}</span>}
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label htmlFor="lastName" className={fieldLabel}>Last Name</label>
-                <input
-                  type="text"
-                  id="lastName"
-                  name="lastName"
-                  value={formData.lastName}
-                  onChange={handleChange}
-                  placeholder="LName"
-                  className={`${inputBase} ${inputState(errors.lastName)}`}
-                />
-                {errors.lastName && <span className={errorText}>{errors.lastName}</span>}
+                {errors.fullName && <span className={errorText}>{errors.fullName}</span>}
               </div>
 
               <div className="flex flex-col gap-2">
@@ -220,18 +198,18 @@ function Register() {
               </div>
 
               <div className="flex flex-col gap-2">
-                <label htmlFor="accountType" className={fieldLabel}>Account Type</label>
+                <label htmlFor="role" className={fieldLabel}>Account Type</label>
                 <select
-                  id="accountType"
-                  name="accountType"
-                  value={formData.accountType}
+                  id="role"
+                  name="role"
+                  value={formData.role}
                   onChange={handleChange}
-                  className={`${inputBase} ${inputState(errors.accountType)} cursor-pointer appearance-none`}
+                  className={`${inputBase} ${inputState(errors.role)} cursor-pointer appearance-none`}
                 >
                   <option value="student">Student</option>
-                  <option value="parent">Parent</option>
-                  <option value="educator">Educator</option>
-                  <option value="counselor">School Counselor</option>
+                  <option value="college_admin">College Admin</option>
+                  <option value="employer">Employer</option>
+                  <option value="instructor">Instructor</option>
                 </select>
               </div>
 

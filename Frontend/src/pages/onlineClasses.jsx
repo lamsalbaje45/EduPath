@@ -115,6 +115,7 @@ function OnlineClassesListing() {
       page: currentPage,
       limit: 12,
       search: debouncedSearch,
+      approvalStatus: "approved",
     };
 
     if (sortBy === "newest") {

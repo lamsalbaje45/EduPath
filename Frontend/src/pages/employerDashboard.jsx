@@ -83,23 +83,14 @@ function EmployerDashboard() {
     setLoading(true);
     setError(null);
     try {
+      const currentUserId = user?._id || user?.id;
       const [oppRes, appRes] = await Promise.all([
-        api.listOpportunities(),
-        api.getApplications(),
+        api.listOpportunities({ employer: currentUserId }),
+        api.getReceivedApplications(),
       ]);
 
-      const allOpps = oppRes.data || [];
+      const employerOpps = oppRes.data || [];
       const allApps = appRes.data || [];
-
-      // TODO: Move client-side employer filter to server-side query param once backend supports GET /opportunities?employer=<id>
-      const currentUserId = user?._id || user?.id;
-      const employerOpps = allOpps.filter(
-        (o) =>
-          !o.employer ||
-          o.employer === currentUserId ||
-          o.employer?._id === currentUserId ||
-          o.companyName?.toLowerCase() === (user?.companyName || user?.firstName)?.toLowerCase()
-      );
 
       setOpportunities(employerOpps);
       setApplications(allApps);
@@ -575,11 +566,7 @@ function EmployerDashboard() {
                       const appId = app.id || app._id;
                       const status = app.status || "submitted";
                       const candidateName =
-                        app.studentName ||
-                        app.student?.name ||
-                        app.user?.firstName
-                          ? `${app.user.firstName} ${app.user.lastName || ""}`
-                          : "Applicant";
+                        app.studentName || app.student?.fullName || "Applicant";
 
                       return (
                         <Card key={appId} className="p-5 sm:p-6 border-slate-200 bg-white space-y-4">
@@ -589,7 +576,7 @@ function EmployerDashboard() {
                                 {candidateName}
                               </h4>
                               <p className="text-xs text-slate-500 font-bold">
-                                Position: <span className="text-slate-800">{app.opportunityTitle || app.title || "Job Opportunity"}</span> • Applied on {app.appliedAt ? new Date(app.appliedAt).toLocaleDateString() : "Recent"}
+                                Position: <span className="text-slate-800">{app.opportunityTitle || app.opportunity?.title || "Job Opportunity"}</span> • Applied on {app.appliedAt ? new Date(app.appliedAt).toLocaleDateString() : "Recent"}
                               </p>
                             </div>
 

@@ -48,6 +48,7 @@ const validateCollegeListQuery = createValidatorChain([
     query('course').optional().isString().trim().isLength({ min: 1, max: 100 }).withMessage('Course filter is invalid.'),
     query('city').optional().isString().trim().isLength({ min: 1, max: 100 }).withMessage('City filter is invalid.'),
     query('admissionStatus').optional().isIn(['open', 'closed', 'coming_soon']).withMessage('Admission status must be open, closed, or coming_soon.'),
+    query('approvalStatus').optional().isIn(['pending', 'approved', 'rejected']).withMessage('Approval status must be pending, approved, or rejected.'),
     query('affiliation').optional().isString().trim().isLength({ min: 1, max: 120 }).withMessage('Affiliation filter is invalid.'),
     query('ratingMin').optional().isFloat({ min: 0, max: 5 }).withMessage('ratingMin must be between 0 and 5.'),
     query('ratingMax').optional().isFloat({ min: 0, max: 5 }).withMessage('ratingMax must be between 0 and 5.'),
@@ -64,6 +65,8 @@ const validateOpportunityListQuery = createValidatorChain([
     query('status').optional().isIn(['active', 'closed', 'draft']).withMessage('Status must be active, closed, or draft.'),
     query('deadlineBefore').optional().isISO8601().withMessage('deadlineBefore must be a valid ISO date.'),
     query('deadlineAfter').optional().isISO8601().withMessage('deadlineAfter must be a valid ISO date.'),
+    query('approvalStatus').optional().isIn(['pending', 'approved', 'rejected']).withMessage('Approval status must be pending, approved, or rejected.'),
+    query('employer').optional().isMongoId().withMessage('employer must be a valid MongoDB ObjectId.'),
 ]);
 
 const validateClassListQuery = createValidatorChain([
@@ -73,6 +76,7 @@ const validateClassListQuery = createValidatorChain([
     query('certificate').optional().isBoolean().withMessage('Certificate must be true or false.'),
     query('priceMin').optional().isFloat({ min: 0 }).withMessage('priceMin must be a positive number.'),
     query('priceMax').optional().isFloat({ min: 0 }).withMessage('priceMax must be a positive number.'),
+    query('approvalStatus').optional().isIn(['pending', 'approved', 'rejected']).withMessage('Approval status must be pending, approved, or rejected.'),
 ]);
 
 const validateObjectId = (fieldName) => createValidatorChain([

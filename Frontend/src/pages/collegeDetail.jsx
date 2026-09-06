@@ -15,8 +15,7 @@ import {
 
 /**
  * College Detail Page
- * Fetches full list and finds college by ID client-side
- * TODO: switch to GET /colleges/:id once backend adds it
+ * Fetches a single college via GET /colleges/:id
  *
  * Features:
  * - Hero header with college info and rating
@@ -55,18 +54,20 @@ function CollegeDetail() {
   const [inquireSuccess, setInquireSuccess] = useState(false);
 
   // Save college (heart icon)
-  const [savedColleges, setSavedColleges] = useState([]);
   const [isSaved, setIsSaved] = useState(false);
 
-  // Load saved colleges from localStorage on mount
+  // Check saved status from the backend on mount
   useEffect(() => {
-    if (isAuthenticated && user?.id) {
-      const storageKey = `saved_colleges_${user.id}`;
-      const stored = JSON.parse(localStorage.getItem(storageKey) || "[]");
-      setSavedColleges(stored);
-      if (id && stored.includes(id)) {
-        setIsSaved(true);
-      }
+    if (isAuthenticated && id) {
+      api
+        .getMySavedItems()
+        .then((res) => {
+          const saved = res.data?.colleges || [];
+          setIsSaved(saved.some((c) => (c._id || c) === id));
+        })
+        .catch(() => {});
+    } else {
+      setIsSaved(false);
     }
   }, [user, isAuthenticated, id]);
 
@@ -76,17 +77,8 @@ function CollegeDetail() {
     setError(null);
 
     try {
-      // Fetch full list and find by ID client-side
-      // TODO: switch to GET /colleges/:id once backend adds it
-      const response = await api.listColleges({ limit: 100, page: 1 });
-      const found = response.data?.find((c) => c._id === id);
-
-      if (!found) {
-        setError("College not found");
-        setCollege(null);
-      } else {
-        setCollege(found);
-      }
+      const response = await api.getCollegeById(id);
+      setCollege(response.data || null);
     } catch (err) {
       console.error("Failed to fetch college:", err);
       setError(
@@ -117,19 +109,12 @@ function CollegeDetail() {
     setInquireLoading(true);
 
     try {
-      // POST inquiry with name, email, phone, message
-      // The endpoint expects collegeId and message, so we'll pass the full message
-      const fullMessage = `
-Name: ${inquireForm.name}
-Email: ${inquireForm.email}
-Phone: ${inquireForm.phone || "Not provided"}
-
-Message:
-${inquireForm.message}
-      `.trim();
-
-      // TODO: Update backend inquiry endpoint to accept targetType and targetRecord
-      await api.createInquiry(college._id, fullMessage);
+      await api.createInquiry({
+        targetType: "college",
+        targetRecord: college._id,
+        message: inquireForm.message,
+        phone: inquireForm.phone,
+      });
 
       setInquireSuccess(true);
       setInquireForm({
@@ -158,27 +143,25 @@ ${inquireForm.message}
   };
 
   // Handle save college
-  const handleToggleSaveCollege = () => {
+  const handleToggleSaveCollege = async () => {
     if (!isAuthenticated) {
       navigate("/login");
       return;
     }
 
-    const storageKey = `saved_colleges_${user.id}`;
-    let updated = [...savedColleges];
+    const wasSaved = isSaved;
+    setIsSaved(!wasSaved);
 
-    if (isSaved) {
-      // Remove from saved
-      updated = updated.filter((c) => c !== id);
-      setIsSaved(false);
-    } else {
-      // Add to saved
-      updated.push(id);
-      setIsSaved(true);
+    try {
+      if (wasSaved) {
+        await api.removeSavedItem("colleges", id);
+      } else {
+        await api.saveItem("colleges", id);
+      }
+    } catch (err) {
+      console.error("Failed to update saved college:", err);
+      setIsSaved(wasSaved);
     }
-
-    setSavedColleges(updated);
-    localStorage.setItem(storageKey, JSON.stringify(updated));
   };
 
   // Render tabs
@@ -411,7 +394,9 @@ ${inquireForm.message}
             <Button
               variant="primary"
               size="lg"
-              onClick={() => setShowInquireModal(true)}
+              onClick={() =>
+                isAuthenticated ? setShowInquireModal(true) : navigate("/login")
+              }
               className="whitespace-nowrap"
             >
               Inquire Now

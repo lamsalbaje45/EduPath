@@ -70,7 +70,7 @@ function Applications() {
     setLoading(true);
     setError(null);
     try {
-      const response = await api.getApplications();
+      const response = await api.getMyApplications();
       setApplications(response.data || []);
     } catch (err) {
       console.error("Failed to fetch applications:", err);

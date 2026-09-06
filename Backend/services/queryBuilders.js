@@ -123,6 +123,10 @@ function buildCollegeQuery(query = {}) {
         filters.push({ admissionStatus: String(query.admissionStatus).trim() });
     }
 
+    if (query.approvalStatus) {
+        filters.push({ approvalStatus: String(query.approvalStatus).trim() });
+    }
+
     if (query.affiliation) {
         filters.push({ affiliation: new RegExp(escapeRegex(String(query.affiliation).trim()), 'i') });
     }
@@ -204,6 +208,14 @@ function buildOpportunityQuery(query = {}) {
         filters.push({ status: String(query.status).trim() });
     }
 
+    if (query.approvalStatus) {
+        filters.push({ approvalStatus: String(query.approvalStatus).trim() });
+    }
+
+    if (query.employer) {
+        filters.push({ employer: query.employer });
+    }
+
     const deadlineBefore = query.deadlineBefore || query.before;
     if (deadlineBefore) {
         const deadlineDate = new Date(deadlineBefore);
@@ -267,6 +279,10 @@ function buildClassQuery(query = {}) {
     const certificateValue = toBoolean(query.certificate ?? query.hasCertificate);
     if (certificateValue !== undefined) {
         filters.push({ certificateAvailability: certificateValue });
+    }
+
+    if (query.approvalStatus) {
+        filters.push({ approvalStatus: String(query.approvalStatus).trim() });
     }
 
     const priceMin = toNumber(query.priceMin);

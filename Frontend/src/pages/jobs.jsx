@@ -122,6 +122,7 @@ function JobsListing() {
       search: debouncedSearch,
       sortBy: sortBy === "deadline" ? "applicationDeadline" : "createdAt",
       sortOrder: sortBy === "deadline" ? "asc" : "desc",
+      approvalStatus: "approved",
     };
 
     if (type) params.type = type;

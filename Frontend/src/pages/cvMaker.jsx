@@ -152,8 +152,10 @@ function CvMaker() {
         });
       }
     } catch (err) {
-      console.error("Failed to load CV:", err);
-      setError("Could not load your saved CV. Starting with default template.");
+      if (err?.status !== 404) {
+        console.error("Failed to load CV:", err);
+        setError("Could not load your saved CV. Starting with default template.");
+      }
     } finally {
       setLoading(false);
     }

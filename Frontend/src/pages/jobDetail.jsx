@@ -9,22 +9,20 @@ import {
   EmptyState,
   ErrorBanner,
   LoadingSpinner,
-  Select,
 } from "../components/ui";
 
 /**
  * Opportunity / Job Detail Page
- * Client-side lookup caveat: filters /opportunities list result by _id
- * TODO: switch to GET /opportunities/:id once backend adds single-item endpoint
+ * Fetches a single opportunity via GET /opportunities/:id
  *
  * Features:
  * - Header: title, companyName, type/workMode/status badges, location, stipendOrSalaryRange, application deadline
  * - Body: Description, Required Skills (chips), Suitable Courses (chips), How to apply card
  * - Apply button:
  *   - If applicationLink present -> External link to company site (target="_blank", rel="noopener noreferrer")
- *   - If internalApplication true & applicationLink empty -> Internal apply flow (modal with cover message + CV selection)
+ *   - If internalApplication true & applicationLink empty -> Internal apply flow (modal with cover message)
  *   - If unauthenticated -> Redirect to /login preserving return path
- * - Save / Bookmark pattern: localStorage-backed saved jobs per user ID
+ * - Save / Bookmark pattern: backed by GET/POST/DELETE /students/me/saved/opportunities/:id
  */
 
 const toTitleCase = (value) =>
@@ -63,14 +61,12 @@ function JobDetail() {
   const [error, setError] = useState(null);
 
   // Bookmark / Save job state
-  const [savedJobs, setSavedJobs] = useState([]);
   const [isSaved, setIsSaved] = useState(false);
 
   // Apply modal state
   const [showApplicationModal, setShowApplicationModal] = useState(false);
   const [coverMessage, setCoverMessage] = useState("");
-  const [cv, setCv] = useState(null);
-  const [selectedCvReference, setSelectedCvReference] = useState("");
+  const [hasCv, setHasCv] = useState(false);
   const [cvLoading, setCvLoading] = useState(false);
   const [cvError, setCvError] = useState(null);
   const [applicationLoading, setApplicationLoading] = useState(false);
@@ -79,37 +75,30 @@ function JobDetail() {
 
   const returnPath = `${location.pathname}${location.search}`;
 
-  // Load saved jobs from localStorage on mount or auth change
+  // Check saved status from the backend on mount or auth change
   useEffect(() => {
     if (!isAuthenticated || !user?.id) {
-      setSavedJobs([]);
       setIsSaved(false);
       return;
     }
 
-    const storageKey = `saved_jobs_${user.id}`;
-    const stored = JSON.parse(localStorage.getItem(storageKey) || "[]");
-    setSavedJobs(stored);
-    setIsSaved(stored.includes(id));
+    api
+      .getMySavedItems()
+      .then((res) => {
+        const saved = res.data?.opportunities || [];
+        setIsSaved(saved.some((o) => (o._id || o) === id));
+      })
+      .catch(() => {});
   }, [id, isAuthenticated, user]);
 
   // Fetch opportunity details
-  // Client-side lookup caveat: filters /opportunities list result by _id
-  // TODO: switch to GET /opportunities/:id once backend adds single-item endpoint
   const fetchOpportunity = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await api.listOpportunities({ limit: 100, page: 1 });
-      const found = response.data?.find((item) => item._id === id);
-
-      if (!found) {
-        setOpportunity(null);
-        setError("Opportunity not found");
-      } else {
-        setOpportunity(found);
-      }
+      const response = await api.getOpportunityById(id);
+      setOpportunity(response.data || null);
     } catch (err) {
       console.error("Failed to fetch opportunity:", err);
       setError(
@@ -124,21 +113,17 @@ function JobDetail() {
     if (id) fetchOpportunity();
   }, [fetchOpportunity, id]);
 
-  // Fetch user CV data for application
+  // Check whether the student has a CV on file (it's attached automatically by the backend)
   const loadCv = useCallback(async () => {
     setCvLoading(true);
     setCvError(null);
 
     try {
       const response = await api.getCv();
-      const cvData = response.data || null;
-      setCv(cvData);
-      setSelectedCvReference(cvData?._id || cvData?.id || "");
-    } catch (err) {
-      console.error("Failed to load CV:", err);
-      setCv(null);
-      setSelectedCvReference("");
-      setCvError("Could not load your CV. You can still submit your cover message.");
+      setHasCv(Boolean(response.data));
+    } catch {
+      setHasCv(false);
+      setCvError("No CV found on file. You can still submit your cover message.");
     } finally {
       setCvLoading(false);
     }
@@ -164,20 +149,25 @@ function JobDetail() {
   };
 
   // Bookmark / Save toggle handler
-  const handleToggleSaveJob = () => {
+  const handleToggleSaveJob = async () => {
     if (!isAuthenticated || !user?.id) {
       navigate("/login", { state: { from: returnPath } });
       return;
     }
 
-    const storageKey = `saved_jobs_${user.id}`;
-    const updated = isSaved
-      ? savedJobs.filter((jobId) => jobId !== id)
-      : [...savedJobs, id];
+    const wasSaved = isSaved;
+    setIsSaved(!wasSaved);
 
-    setSavedJobs(updated);
-    setIsSaved(!isSaved);
-    localStorage.setItem(storageKey, JSON.stringify(updated));
+    try {
+      if (wasSaved) {
+        await api.removeSavedItem("opportunities", id);
+      } else {
+        await api.saveItem("opportunities", id);
+      }
+    } catch (err) {
+      console.error("Failed to update saved job:", err);
+      setIsSaved(wasSaved);
+    }
   };
 
   // Submit internal application
@@ -191,10 +181,8 @@ function JobDetail() {
 
     try {
       await api.createApplication({
-        opportunityId: opportunity._id,
+        opportunity: opportunity._id,
         coverMessage: coverMessage.trim(),
-        cvReference: selectedCvReference || undefined,
-        cvSnapshot: selectedCvReference ? cv : undefined,
       });
       setApplicationSuccess(true);
       setCoverMessage("");
@@ -242,7 +230,6 @@ function JobDetail() {
 
   const isClosed = isOpportunityClosed(opportunity);
   const statusLabel = isClosed ? "Closed" : toTitleCase(opportunity.status);
-  const cvReference = cv?._id || cv?.id;
   const hasExternalApplication = Boolean(opportunity.applicationLink);
   const canApplyInternally =
     opportunity.internalApplication && !hasExternalApplication;
@@ -493,35 +480,22 @@ function JobDetail() {
               </div>
 
               <div>
-                <label
-                  htmlFor="cv-selection"
-                  className="mb-2 block text-sm font-medium text-gray-900"
-                >
-                  Attach CV
-                </label>
+                <p className="mb-2 block text-sm font-medium text-gray-900">
+                  CV Attachment
+                </p>
                 {cvLoading ? (
                   <div className="rounded-xl border border-gray-200 p-3">
-                    <LoadingSpinner size="sm" message="Loading your CV..." />
+                    <LoadingSpinner size="sm" message="Checking your CV..." />
                   </div>
+                ) : hasCv ? (
+                  <p className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800">
+                    ✓ Your CV from CV Maker will be attached automatically.
+                  </p>
                 ) : (
-                  <Select
-                    id="cv-selection"
-                    value={selectedCvReference}
-                    onChange={(e) => setSelectedCvReference(e.target.value)}
-                    placeholder="Apply without attaching a CV"
-                    options={
-                      cv && cvReference
-                        ? [
-                            {
-                              value: cvReference,
-                              label: cv.title || "CV from CV Maker",
-                            },
-                          ]
-                        : []
-                    }
-                  />
+                  <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+                    {cvError || "No CV found. You can still submit your cover message, or build one in CV Maker first."}
+                  </p>
                 )}
-                {cvError && <p className="mt-2 text-xs text-amber-700">{cvError}</p>}
               </div>
 
               <div className="flex gap-3">

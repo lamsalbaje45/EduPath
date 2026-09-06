@@ -99,11 +99,11 @@ function AppRoutes() {
           }
         />
 
-        {/* Admin/Partner submission routes */}
+        {/* Partner submission routes - role-gated to match backend authorization */}
         <Route
           path="/list-college"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["college_admin", "admin"]}>
               <ListCollege />
             </ProtectedRoute>
           }
@@ -111,7 +111,7 @@ function AppRoutes() {
         <Route
           path="/post-job"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["employer", "admin"]}>
               <PostJob />
             </ProtectedRoute>
           }

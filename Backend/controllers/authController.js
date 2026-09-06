@@ -84,11 +84,15 @@ const logout = asyncHandler(async (req, res) => sendSuccess(res, {
     message: 'Logged out successfully. Discard the token on the client.',
 }));
 
-const getCurrentUser = asyncHandler(async (req, res) => sendSuccess(res, {
-    message: 'Current authenticated user',
-    data: req.user,
-    user: req.user,
-}));
+const getCurrentUser = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+        return sendError(res, { status: 404, message: 'User not found.' });
+    }
+
+    return sendSuccess(res, { message: 'Current authenticated user retrieved successfully.', data: user });
+});
 
 const changePassword = asyncHandler(async (req, res) => {
     const { currentPassword, newPassword } = req.body;

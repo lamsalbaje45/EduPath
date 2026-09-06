@@ -14,8 +14,7 @@ import {
 
 /**
  * Online Class Detail Page
- * Client-side lookup caveat: filters /classes list result by _id
- * TODO: switch to GET /classes/:id once backend adds single-item endpoint
+ * Fetches a single class via GET /classes/:id
  *
  * Features:
  * - Header: classTitle, instructorOrOrganization, level/mode/price badges, duration, startDate, schedule
@@ -69,7 +68,7 @@ const formatStartDate = (startDate) => {
 function OnlineClassDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
 
   // State
   const [onlineClass, setOnlineClass] = useState(null);
@@ -91,22 +90,13 @@ function OnlineClassDetail() {
   const [inquireError, setInquireError] = useState(null);
   const [inquireSuccess, setInquireSuccess] = useState(false);
 
-  // Client-side lookup caveat: filters /classes list result by _id
-  // TODO: switch to GET /classes/:id once backend adds single-item endpoint
   const fetchClassDetail = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await api.listClasses({ limit: 100, page: 1 });
-      const found = response.data?.find((c) => c._id === id);
-
-      if (!found) {
-        setError("Online class not found");
-        setOnlineClass(null);
-      } else {
-        setOnlineClass(found);
-      }
+      const response = await api.getClassById(id);
+      setOnlineClass(response.data || null);
     } catch (err) {
       console.error("Failed to fetch class details:", err);
       setError(
@@ -135,24 +125,11 @@ function OnlineClassDetail() {
     setInquireLoading(true);
 
     try {
-      const fullMessage = `
-Class Enrollment Inquiry: ${onlineClass.classTitle}
-Name: ${inquireForm.name}
-Email: ${inquireForm.email}
-Phone: ${inquireForm.phone || "Not provided"}
-
-Message:
-${inquireForm.message}
-      `.trim();
-
       await api.createInquiry({
         targetType: "instructor",
         targetRecord: onlineClass._id,
-        collegeId: onlineClass._id, // fallback for legacy endpoint fields
-        studentName: inquireForm.name,
-        email: inquireForm.email,
+        message: inquireForm.message,
         phone: inquireForm.phone,
-        message: fullMessage,
       });
 
       setInquireSuccess(true);
@@ -303,7 +280,9 @@ ${inquireForm.message}
                 <Button
                   variant="primary"
                   size="lg"
-                  onClick={() => setShowInquireModal(true)}
+                  onClick={() =>
+                    isAuthenticated ? setShowInquireModal(true) : navigate("/login")
+                  }
                   className="whitespace-nowrap"
                 >
                   Contact for Enrollment
