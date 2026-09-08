@@ -1,6 +1,18 @@
 @import "tailwindcss";
 @config "../tailwind.config.js";
 
+/*
+ * The app has no in-app theme toggle, and only a handful of components carry
+ * `dark:` utility classes — most pages have no dark styling at all. Left on
+ * Tailwind's default `prefers-color-scheme` trigger, those stray `dark:`
+ * classes (e.g. dark:text-white) activate on any OS set to dark mode and
+ * render on top of the rest of the app's unstyled light backgrounds, making
+ * that text invisible. Scope `dark:` to an explicit `.dark` ancestor class
+ * instead, which nothing in the app currently sets, so the site stays on its
+ * single light design until real theme support is added.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @font-face {
   font-family: "Mona Sans";
   src: url("/fonts/MonaSansVF.ttf") format("truetype");

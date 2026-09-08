@@ -203,7 +203,6 @@ function CollegeDetail() {
                     key={facility}
                     className="flex items-center gap-2 rounded-lg bg-gray-50 p-3"
                   >
-                    <span className="text-lg">🏫</span>
                     <span className="text-sm font-medium text-gray-700">
                       {facility}
                     </span>
@@ -349,22 +348,8 @@ function CollegeDetail() {
 
             {/* Rating */}
             <div className="mt-3 flex items-center gap-3">
-              <div className="flex gap-0.5">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <span
-                    key={i}
-                    className={
-                      i < Math.floor(college.rating)
-                        ? "text-amber-400"
-                        : "text-gray-300"
-                    }
-                  >
-                    ★
-                  </span>
-                ))}
-              </div>
               <span className="font-semibold text-gray-700">
-                {college.rating.toFixed(1)} ({college.rating} stars)
+                Rating {college.rating.toFixed(1)} / 5
               </span>
             </div>
 
@@ -407,7 +392,7 @@ function CollegeDetail() {
               onClick={handleToggleSaveCollege}
               className="whitespace-nowrap"
             >
-              {isSaved ? "❤️ Saved" : "🤍 Save College"}
+              {isSaved ? "Saved" : "Save College"}
             </Button>
           </div>
         </div>
@@ -488,7 +473,7 @@ function CollegeDetail() {
 
             {inquireSuccess && (
               <div className="mb-4 rounded-lg bg-green-50 p-3 text-sm text-green-700">
-                ✓ Your inquiry has been submitted successfully. We'll be in
+                Your inquiry has been submitted successfully. We'll be in
                 touch soon!
               </div>
             )}

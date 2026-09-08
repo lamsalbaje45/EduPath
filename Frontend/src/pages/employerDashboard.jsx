@@ -70,6 +70,8 @@ function EmployerDashboard() {
   // Delete Confirmation Modal State
   const [deletingOpp, setDeletingOpp] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [togglingOpp, setTogglingOpp] = useState(null);
+  const [togglingStatus, setTogglingStatus] = useState(false);
 
   // Applications Inbox Filters & State
   const [selectedOppFilter, setSelectedOppFilter] = useState("all");
@@ -159,9 +161,11 @@ function EmployerDashboard() {
   };
 
   // Toggle Listing Status (Active <-> Closed)
-  const handleToggleStatus = async (opp) => {
-    const id = opp._id || opp.id;
-    const newStatus = opp.status === "closed" ? "active" : "closed";
+  const handleConfirmToggleStatus = async () => {
+    if (!togglingOpp) return;
+    const id = togglingOpp._id || togglingOpp.id;
+    const newStatus = togglingOpp.status === "closed" ? "active" : "closed";
+    setTogglingStatus(true);
 
     try {
       await api.updateOpportunity(id, { status: newStatus });
@@ -169,12 +173,15 @@ function EmployerDashboard() {
         prev.map((o) => ((o._id || o.id) === id ? { ...o, status: newStatus } : o))
       );
       setSuccessMessage(
-        `Listing "${opp.title}" status changed to ${newStatus}.`
+        `Listing "${togglingOpp.title}" status changed to ${newStatus}.`
       );
       setTimeout(() => setSuccessMessage(""), 4000);
+      setTogglingOpp(null);
     } catch (err) {
       console.error("Failed to toggle listing status:", err);
       setError(err?.message || "Failed to change listing status.");
+    } finally {
+      setTogglingStatus(false);
     }
   };
 
@@ -297,7 +304,7 @@ function EmployerDashboard() {
         {/* Global Notifications */}
         {successMessage && (
           <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-emerald-800">
-            ✓ {successMessage}
+            {successMessage}
           </div>
         )}
         {error && (
@@ -311,9 +318,9 @@ function EmployerDashboard() {
         {/* Navigation Tabs */}
         <div className="mb-8 flex border-b border-slate-200 overflow-x-auto">
           {[
-            { id: "overview", label: "📊 Overview" },
-            { id: "listings", label: `📋 My Listings (${totalListings})` },
-            { id: "applications", label: `📥 Applications Inbox (${totalApps})` },
+            { id: "overview", label: "Overview" },
+            { id: "listings", label: `My Listings (${totalListings})` },
+            { id: "applications", label: `Applications Inbox (${totalApps})` },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -468,8 +475,8 @@ function EmployerDashboard() {
                             </p>
 
                             <div className="flex items-center gap-4 text-xs font-bold text-slate-600 pt-1">
-                              <span>📥 {oppApps.length} Application{oppApps.length !== 1 ? "s" : ""}</span>
-                              <span>📅 Posted: {opp.createdAt ? new Date(opp.createdAt).toLocaleDateString() : "Recent"}</span>
+                              <span>{oppApps.length} Application{oppApps.length !== 1 ? "s" : ""}</span>
+                              <span>Posted: {opp.createdAt ? new Date(opp.createdAt).toLocaleDateString() : "Recent"}</span>
                             </div>
                           </div>
 
@@ -480,24 +487,23 @@ function EmployerDashboard() {
                               size="sm"
                               onClick={() => handleOpenEdit(opp)}
                             >
-                              ✏️ Edit
+                              Edit
                             </Button>
 
                             <Button
                               variant="secondary"
                               size="sm"
-                              onClick={() => handleToggleStatus(opp)}
+                              onClick={() => setTogglingOpp(opp)}
                             >
-                              {opp.status === "closed" ? "▶ Reopen" : "⏸ Close"}
+                              {opp.status === "closed" ? "Reopen" : "Close"}
                             </Button>
 
                             <Button
-                              variant="danger"
+                              variant="dangerSoft"
                               size="sm"
                               onClick={() => setDeletingOpp(opp)}
-                              className="bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200"
                             >
-                              🗑️ Delete
+                              Delete
                             </Button>
                           </div>
                         </Card>
@@ -619,7 +625,7 @@ function EmployerDashboard() {
                                 onClick={() => setExpandedCvApp(expandedCvApp === appId ? null : appId)}
                                 className="text-xs font-black text-[#5472FC] hover:underline flex items-center gap-1"
                               >
-                                📄 {expandedCvApp === appId ? "Hide CV Snapshot" : "View Candidate CV Snapshot"}
+                                {expandedCvApp === appId ? "Hide CV Snapshot" : "View Candidate CV Snapshot"}
                               </button>
 
                               {expandedCvApp === appId && (
@@ -832,6 +838,42 @@ function EmployerDashboard() {
                   className="bg-rose-600 hover:bg-rose-700 text-white"
                 >
                   Confirm Delete
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TOGGLE STATUS CONFIRMATION MODAL */}
+        {togglingOpp && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 backdrop-blur-sm p-4">
+            <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+              <h3 className="text-xl font-black text-slate-950">
+                {togglingOpp.status === "closed" ? "Reopen" : "Close"} this listing?
+              </h3>
+              <p className="mt-2 text-sm text-slate-600 leading-relaxed">
+                Are you sure you want to {togglingOpp.status === "closed" ? "reopen" : "close"}{" "}
+                <strong>{togglingOpp.title}</strong>?{" "}
+                {togglingOpp.status === "closed"
+                  ? "It will become visible and open for applications again."
+                  : "It will stop accepting new applications."}
+              </p>
+              <div className="mt-6 flex justify-end gap-3">
+                <Button
+                  variant="outline"
+                  size="md"
+                  onClick={() => setTogglingOpp(null)}
+                  disabled={togglingStatus}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  size="md"
+                  onClick={handleConfirmToggleStatus}
+                  loading={togglingStatus}
+                >
+                  {togglingOpp.status === "closed" ? "Confirm Reopen" : "Confirm Close"}
                 </Button>
               </div>
             </div>

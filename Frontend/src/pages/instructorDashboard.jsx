@@ -248,7 +248,7 @@ function InstructorDashboard() {
         {/* Global Notifications */}
         {successMessage && (
           <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-emerald-800">
-            ✓ {successMessage}
+            {successMessage}
           </div>
         )}
         {error && (
@@ -258,9 +258,9 @@ function InstructorDashboard() {
         {/* Navigation Tabs */}
         <div className="mb-8 flex border-b border-slate-200 overflow-x-auto">
           {[
-            { id: "overview", label: "📊 Overview" },
-            { id: "listings", label: `🎓 My Classes (${totalListings})` },
-            { id: "inquiries", label: `💬 Inquiries Inbox (${totalInquiries})` },
+            { id: "overview", label: "Overview" },
+            { id: "listings", label: `My Classes (${totalListings})` },
+            { id: "inquiries", label: `Inquiries Inbox (${totalInquiries})` },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -392,7 +392,7 @@ function InstructorDashboard() {
                                 {(cls.approvalStatus || "pending").toUpperCase()}
                               </Badge>
                               {cls.certificateAvailability && (
-                                <Badge variant="warning" size="sm">🎓 Certificate</Badge>
+                                <Badge variant="warning" size="sm">Certificate</Badge>
                               )}
                             </div>
 
@@ -404,24 +404,23 @@ function InstructorDashboard() {
                             </p>
 
                             <div className="flex items-center gap-4 text-xs font-bold text-slate-600 pt-1">
-                              <span>💬 {classInquiries.length} Inquir{classInquiries.length !== 1 ? "ies" : "y"}</span>
-                              <span>📅 Posted: {cls.createdAt ? new Date(cls.createdAt).toLocaleDateString() : "Recent"}</span>
+                              <span>{classInquiries.length} Inquir{classInquiries.length !== 1 ? "ies" : "y"}</span>
+                              <span>Posted: {cls.createdAt ? new Date(cls.createdAt).toLocaleDateString() : "Recent"}</span>
                             </div>
                           </div>
 
                           {/* Listing Actions */}
                           <div className="flex flex-wrap items-center gap-2 border-t pt-3 md:border-t-0 md:pt-0 border-slate-100">
                             <Button variant="outline" size="sm" onClick={() => handleOpenEdit(cls)}>
-                              ✏️ Edit
+                              Edit
                             </Button>
 
                             <Button
-                              variant="danger"
+                              variant="dangerSoft"
                               size="sm"
                               onClick={() => setDeletingClass(cls)}
-                              className="bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200"
                             >
-                              🗑️ Delete
+                              Delete
                             </Button>
                           </div>
                         </Card>

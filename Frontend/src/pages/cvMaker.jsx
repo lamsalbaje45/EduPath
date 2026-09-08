@@ -16,7 +16,7 @@ import {
  * Features:
  * - Editable form with add/remove entry controls for education, experience, projects, certifications
  * - Tag-style inputs for skills and languages
- * - Live-updating preview with 3 visual templates (Modern, Classic, Minimal)
+ * - Live-updating preview with 2 visual templates (Modern, Classic)
  * - Autosave with 1000ms debounce + manual save via mock/stub adapter
  * - Print-to-PDF via window.print() and print-only CSS
  * - Protected route requirement
@@ -32,11 +32,6 @@ const TEMPLATES = [
     id: "classic",
     name: "Classic Elegant",
     description: "Traditional centered header with clear section dividers",
-  },
-  {
-    id: "minimal",
-    name: "Minimalist Tech",
-    description: "Clean single-column layout with compact typography",
   },
 ];
 
@@ -125,6 +120,13 @@ function normalizeDateEntries(entries) {
     ...entry,
     startDate: toMonthInputValue(entry.startDate),
     endDate: toMonthInputValue(entry.endDate),
+  }));
+}
+
+function normalizeCertifications(entries) {
+  return entries.map((entry) => ({
+    ...entry,
+    date: toMonthInputValue(entry.date),
   }));
 }
 
@@ -298,10 +300,12 @@ function CvMaker() {
             ? fetched.projectEntries
             : DEFAULT_CV.projectEntries,
           certifications: fetched.certifications?.length
-            ? fetched.certifications
+            ? normalizeCertifications(fetched.certifications)
             : DEFAULT_CV.certifications,
           languages: fetched.languages || [],
-          templatePreference: fetched.templatePreference || "modern",
+          templatePreference: TEMPLATES.some((tpl) => tpl.id === fetched.templatePreference)
+            ? fetched.templatePreference
+            : "modern",
           publicShareStatus: Boolean(fetched.publicShareStatus),
         });
       }
@@ -454,12 +458,25 @@ function CvMaker() {
     <main className="min-h-screen bg-gray-100 py-6">
       {/* Print-only CSS block to hide non-CV elements during print */}
       <style>{`
+        /* Chrome only omits its default header/footer (title, URL, date, page number)
+           when the page has zero margin, so this is the only way to suppress them
+           from CSS -- there's no other document-level control for that. */
+        @page {
+          margin: 0;
+        }
         @media print {
           body * {
             visibility: hidden !important;
           }
           #cv-preview-document, #cv-preview-document * {
             visibility: visible !important;
+            /* Browsers skip background colors/images when printing unless told
+               otherwise, so the Modern template's dark sidebar (and skill/language
+               tag backgrounds) would print as a blank white box with invisible
+               white text without this. */
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
           }
           #cv-preview-pane {
             display: block !important;
@@ -474,6 +491,21 @@ function CvMaker() {
             box-shadow: none !important;
             border: none !important;
             background: white !important;
+          }
+          /* Chrome evaluates the "md:" breakpoint against a print-time width that can
+             fall short of 768px even on a full letter/A4 page, so it silently drops
+             back to the single-column mobile layout and stacks the sidebar above the
+             main content. Force the two-column layout explicitly instead of relying
+             on that breakpoint during print. */
+          .cv-modern-grid {
+            display: grid !important;
+            grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+          }
+          .cv-modern-sidebar {
+            grid-column: span 4 / span 4 !important;
+          }
+          .cv-modern-main {
+            grid-column: span 8 / span 8 !important;
           }
           .no-print {
             display: none !important;
@@ -535,7 +567,7 @@ function CvMaker() {
               onClick={handlePrintPdf}
               className="bg-[#5472FC] hover:bg-[#435DDE]"
             >
-              🖨️ Download PDF
+              Download PDF
             </Button>
           </div>
         </div>
@@ -551,7 +583,7 @@ function CvMaker() {
                 : "text-gray-600 hover:text-gray-900"
             }`}
           >
-            📝 Edit Form
+            Edit Form
           </button>
           <button
             type="button"
@@ -562,7 +594,7 @@ function CvMaker() {
                 : "text-gray-600 hover:text-gray-900"
             }`}
           >
-            👁️ Live Preview
+            Live Preview
           </button>
         </div>
 
@@ -1181,16 +1213,15 @@ function CvMaker() {
                         }
                       />
                       <div className="grid gap-3 sm:grid-cols-2">
-                        <Input
+                        <MonthYearSelect
                           label="Date Issued"
-                          placeholder="e.g. August 2023"
                           value={cert.date}
-                          onChange={(e) =>
+                          onChange={(nextValue) =>
                             updateArrayEntry(
                               "certifications",
                               idx,
                               "date",
-                              e.target.value,
+                              nextValue,
                             )
                           }
                         />
@@ -1302,7 +1333,7 @@ function CvMaker() {
           >
             <div className="sticky top-4">
               <div className="no-print mb-2 flex items-center justify-between text-xs text-gray-500">
-                <span>📄 Live Document Preview</span>
+                <span>Live Document Preview</span>
                 <span>Template: {templatePreference.toUpperCase()}</span>
               </div>
 
@@ -1313,19 +1344,19 @@ function CvMaker() {
               >
                 {/* Modern Template Layout */}
                 {templatePreference === "modern" && (
-                  <div className="grid gap-6 md:grid-cols-12">
+                  <div className="cv-modern-grid grid gap-6 md:grid-cols-12">
                     {/* Left Column Accent */}
-                    <div className="md:col-span-4 rounded-xl bg-slate-900 p-5 text-white">
-                      <h2 className="text-2xl font-black leading-tight text-white">
+                    <div className="cv-modern-sidebar min-w-0 md:col-span-4 rounded-xl bg-slate-900 p-5 text-white">
+                      <h2 className="text-2xl font-black leading-tight text-white break-words">
                         {personalDetails.fullName || "Your Full Name"}
                       </h2>
-                      <p className="mt-2 text-xs text-slate-300">
+                      <p className="mt-2 text-xs text-slate-300 break-words">
                         {personalDetails.email}
                       </p>
-                      <p className="text-xs text-slate-300">
+                      <p className="text-xs text-slate-300 break-words">
                         {personalDetails.phone}
                       </p>
-                      <p className="text-xs text-slate-300">
+                      <p className="text-xs text-slate-300 break-words">
                         {personalDetails.address}
                       </p>
 
@@ -1362,7 +1393,7 @@ function CvMaker() {
                     </div>
 
                     {/* Right Main Content */}
-                    <div className="space-y-5 md:col-span-8">
+                    <div className="cv-modern-main min-w-0 space-y-5 md:col-span-8">
                       {/* Summary */}
                       {personalDetails.summary && (
                         <div>
@@ -1444,6 +1475,42 @@ function CvMaker() {
                                 <p className="text-xs text-gray-700">
                                   {proj.description}
                                 </p>
+                                {proj.link && (
+                                  <p className="text-xs text-[#5472FC] break-all">
+                                    {proj.link}
+                                  </p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Certifications */}
+                      {certifications.length > 0 && (
+                        <div>
+                          <h3 className="mb-2 border-b border-gray-200 pb-1 text-xs font-black uppercase text-[#5472FC]">
+                            Certifications
+                          </h3>
+                          <div className="space-y-2">
+                            {certifications.map((cert, idx) => (
+                              <div key={idx} className="flex justify-between text-xs">
+                                <div>
+                                  <p className="font-bold text-slate-900">
+                                    {cert.name}
+                                  </p>
+                                  <p className="text-gray-600">
+                                    {cert.issuer}
+                                  </p>
+                                  {cert.link && (
+                                    <p className="text-[#5472FC] break-all">
+                                      {cert.link}
+                                    </p>
+                                  )}
+                                </div>
+                                <span className="whitespace-nowrap text-gray-500">
+                                  {formatMonthYear(cert.date)}
+                                </span>
                               </div>
                             ))}
                           </div>
@@ -1458,10 +1525,10 @@ function CvMaker() {
                   <div className="space-y-5 text-slate-900 font-serif">
                     {/* Centered Header */}
                     <div className="border-b-2 border-slate-900 pb-4 text-center">
-                      <h2 className="text-3xl font-bold tracking-tight text-slate-950">
+                      <h2 className="text-3xl font-bold tracking-tight text-slate-950 break-words">
                         {personalDetails.fullName || "Your Full Name"}
                       </h2>
-                      <p className="mt-1 text-xs text-gray-600 font-sans">
+                      <p className="mt-1 text-xs text-gray-600 font-sans break-words">
                         {[
                           personalDetails.email,
                           personalDetails.phone,
@@ -1526,10 +1593,68 @@ function CvMaker() {
                                 </span>
                                 <p className="text-gray-600">
                                   {edu.degree} {edu.fieldOfStudy && `in ${edu.fieldOfStudy}`}
+                                  {edu.gradeOrScore && ` • ${edu.gradeOrScore}`}
                                 </p>
                               </div>
                               <span className="text-gray-500 font-medium">
                                 {formatDateRange(edu.startDate, edu.endDate)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Projects */}
+                    {projectEntries.length > 0 && (
+                      <div>
+                        <h3 className="mb-2 border-b border-slate-300 pb-0.5 text-sm font-bold uppercase tracking-wider text-slate-950 font-sans">
+                          Projects
+                        </h3>
+                        <div className="space-y-2 font-sans">
+                          {projectEntries.map((proj, idx) => (
+                            <div key={idx}>
+                              <p className="text-xs font-bold text-slate-900">
+                                {proj.name}
+                              </p>
+                              <p className="text-xs text-gray-700 leading-relaxed">
+                                {proj.description}
+                              </p>
+                              {proj.link && (
+                                <p className="text-xs text-gray-600 break-all">
+                                  {proj.link}
+                                </p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Certifications */}
+                    {certifications.length > 0 && (
+                      <div>
+                        <h3 className="mb-2 border-b border-slate-300 pb-0.5 text-sm font-bold uppercase tracking-wider text-slate-950 font-sans">
+                          Certifications
+                        </h3>
+                        <div className="space-y-2 font-sans">
+                          {certifications.map((cert, idx) => (
+                            <div key={idx} className="flex justify-between text-xs">
+                              <div>
+                                <span className="font-bold text-slate-900">
+                                  {cert.name}
+                                </span>
+                                <p className="text-gray-600">
+                                  {cert.issuer}
+                                </p>
+                                {cert.link && (
+                                  <p className="text-gray-600 break-all">
+                                    {cert.link}
+                                  </p>
+                                )}
+                              </div>
+                              <span className="whitespace-nowrap font-medium text-gray-500">
+                                {formatMonthYear(cert.date)}
                               </span>
                             </div>
                           ))}
@@ -1556,102 +1681,6 @@ function CvMaker() {
                   </div>
                 )}
 
-                {/* Minimal Template Layout */}
-                {templatePreference === "minimal" && (
-                  <div className="space-y-6 text-slate-900 font-sans">
-                    {/* Left aligned header */}
-                    <div>
-                      <h2 className="text-3xl font-black tracking-tight text-slate-950">
-                        {personalDetails.fullName || "Your Full Name"}
-                      </h2>
-                      <div className="mt-1 flex flex-wrap gap-3 text-xs text-gray-500">
-                        {personalDetails.email && (
-                          <span>📧 {personalDetails.email}</span>
-                        )}
-                        {personalDetails.phone && (
-                          <span>📞 {personalDetails.phone}</span>
-                        )}
-                        {personalDetails.address && (
-                          <span>📍 {personalDetails.address}</span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Summary */}
-                    {personalDetails.summary && (
-                      <p className="text-xs text-gray-700 leading-relaxed border-l-2 border-[#5472FC] pl-3">
-                        {personalDetails.summary}
-                      </p>
-                    )}
-
-                    {/* Experience */}
-                    {experienceEntries.length > 0 && (
-                      <div className="space-y-3">
-                        <h3 className="text-xs font-black uppercase tracking-wider text-gray-400">
-                          // Experience
-                        </h3>
-                        {experienceEntries.map((exp, idx) => (
-                          <div key={idx} className="space-y-1">
-                            <div className="flex justify-between text-xs font-bold text-slate-950">
-                              <span>
-                                {exp.title} <span className="font-normal text-gray-500">@ {exp.organization}</span>
-                              </span>
-                              <span className="text-gray-400">
-                                {formatDateRange(exp.startDate, exp.endDate)}
-                              </span>
-                            </div>
-                            <p className="text-xs text-gray-600">
-                              {exp.description}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Education */}
-                    {educationEntries.length > 0 && (
-                      <div className="space-y-3">
-                        <h3 className="text-xs font-black uppercase tracking-wider text-gray-400">
-                          // Education
-                        </h3>
-                        {educationEntries.map((edu, idx) => (
-                          <div key={idx} className="flex justify-between text-xs">
-                            <div>
-                              <span className="font-bold text-slate-950">
-                                {edu.institution}
-                              </span>
-                              <p className="text-gray-600">
-                                {edu.degree} {edu.fieldOfStudy && `in ${edu.fieldOfStudy}`}
-                              </p>
-                            </div>
-                            <span className="text-gray-400 font-medium">
-                              {formatDateRange(edu.startDate, edu.endDate)}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Skills */}
-                    {skillList.length > 0 && (
-                      <div className="space-y-2">
-                        <h3 className="text-xs font-black uppercase tracking-wider text-gray-400">
-                          // Skills
-                        </h3>
-                        <div className="flex flex-wrap gap-1.5">
-                          {skillList.map((skill) => (
-                            <span
-                              key={skill}
-                              className="rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700"
-                            >
-                              {skill}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
             </div>
           </div>

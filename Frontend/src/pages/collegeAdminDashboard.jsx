@@ -77,6 +77,8 @@ function CollegeAdminDashboard() {
   // Delete Confirmation Modal State
   const [deletingCollege, setDeletingCollege] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [togglingCollege, setTogglingCollege] = useState(null);
+  const [togglingStatus, setTogglingStatus] = useState(false);
 
   // Inquiries Inbox Filters
   const [selectedCollegeFilter, setSelectedCollegeFilter] = useState("all");
@@ -149,20 +151,25 @@ function CollegeAdminDashboard() {
   };
 
   // Toggle Admission Status (Open <-> Closed)
-  const handleToggleAdmissionStatus = async (college) => {
-    const id = college._id || college.id;
-    const newStatus = college.admissionStatus === "closed" ? "open" : "closed";
+  const handleConfirmToggleAdmissionStatus = async () => {
+    if (!togglingCollege) return;
+    const id = togglingCollege._id || togglingCollege.id;
+    const newStatus = togglingCollege.admissionStatus === "closed" ? "open" : "closed";
+    setTogglingStatus(true);
 
     try {
       await api.updateCollege(id, { admissionStatus: newStatus });
       setColleges((prev) =>
         prev.map((c) => ((c._id || c.id) === id ? { ...c, admissionStatus: newStatus } : c))
       );
-      setSuccessMessage(`Admissions for "${college.collegeName}" set to ${newStatus}.`);
+      setSuccessMessage(`Admissions for "${togglingCollege.collegeName}" set to ${newStatus}.`);
       setTimeout(() => setSuccessMessage(""), 4000);
+      setTogglingCollege(null);
     } catch (err) {
       console.error("Failed to toggle admission status:", err);
       setError(err?.message || "Failed to change admission status.");
+    } finally {
+      setTogglingStatus(false);
     }
   };
 
@@ -256,7 +263,7 @@ function CollegeAdminDashboard() {
         {/* Global Notifications */}
         {successMessage && (
           <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-emerald-800">
-            ✓ {successMessage}
+            {successMessage}
           </div>
         )}
         {error && (
@@ -266,9 +273,9 @@ function CollegeAdminDashboard() {
         {/* Navigation Tabs */}
         <div className="mb-8 flex border-b border-slate-200 overflow-x-auto">
           {[
-            { id: "overview", label: "📊 Overview" },
-            { id: "listings", label: `🏫 My Listings (${totalListings})` },
-            { id: "inquiries", label: `💬 Inquiries Inbox (${totalInquiries})` },
+            { id: "overview", label: "Overview" },
+            { id: "listings", label: `My Listings (${totalListings})` },
+            { id: "inquiries", label: `Inquiries Inbox (${totalInquiries})` },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -413,28 +420,27 @@ function CollegeAdminDashboard() {
                             </p>
 
                             <div className="flex items-center gap-4 text-xs font-bold text-slate-600 pt-1">
-                              <span>💬 {collegeInquiries.length} Inquir{collegeInquiries.length !== 1 ? "ies" : "y"}</span>
-                              <span>📅 Listed: {college.createdAt ? new Date(college.createdAt).toLocaleDateString() : "Recent"}</span>
+                              <span>{collegeInquiries.length} Inquir{collegeInquiries.length !== 1 ? "ies" : "y"}</span>
+                              <span>Listed: {college.createdAt ? new Date(college.createdAt).toLocaleDateString() : "Recent"}</span>
                             </div>
                           </div>
 
                           {/* Listing Actions */}
                           <div className="flex flex-wrap items-center gap-2 border-t pt-3 md:border-t-0 md:pt-0 border-slate-100">
                             <Button variant="outline" size="sm" onClick={() => handleOpenEdit(college)}>
-                              ✏️ Edit
+                              Edit
                             </Button>
 
-                            <Button variant="secondary" size="sm" onClick={() => handleToggleAdmissionStatus(college)}>
-                              {college.admissionStatus === "closed" ? "▶ Reopen" : "⏸ Close"}
+                            <Button variant="secondary" size="sm" onClick={() => setTogglingCollege(college)}>
+                              {college.admissionStatus === "closed" ? "Reopen" : "Close"}
                             </Button>
 
                             <Button
-                              variant="danger"
+                              variant="dangerSoft"
                               size="sm"
                               onClick={() => setDeletingCollege(college)}
-                              className="bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200"
                             >
-                              🗑️ Delete
+                              Delete
                             </Button>
                           </div>
                         </Card>
@@ -667,6 +673,42 @@ function CollegeAdminDashboard() {
                   className="bg-rose-600 hover:bg-rose-700 text-white"
                 >
                   Confirm Delete
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TOGGLE ADMISSION STATUS CONFIRMATION MODAL */}
+        {togglingCollege && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 backdrop-blur-sm p-4">
+            <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+              <h3 className="text-xl font-black text-slate-950">
+                {togglingCollege.admissionStatus === "closed" ? "Reopen" : "Close"} admissions?
+              </h3>
+              <p className="mt-2 text-sm text-slate-600 leading-relaxed">
+                Are you sure you want to {togglingCollege.admissionStatus === "closed" ? "reopen" : "close"}{" "}
+                admissions for <strong>{togglingCollege.collegeName}</strong>?{" "}
+                {togglingCollege.admissionStatus === "closed"
+                  ? "Students will be able to submit inquiries again."
+                  : "Students won't be able to submit new inquiries."}
+              </p>
+              <div className="mt-6 flex justify-end gap-3">
+                <Button
+                  variant="outline"
+                  size="md"
+                  onClick={() => setTogglingCollege(null)}
+                  disabled={togglingStatus}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  size="md"
+                  onClick={handleConfirmToggleAdmissionStatus}
+                  loading={togglingStatus}
+                >
+                  {togglingCollege.admissionStatus === "closed" ? "Confirm Reopen" : "Confirm Close"}
                 </Button>
               </div>
             </div>

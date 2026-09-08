@@ -15,27 +15,47 @@ function Navbar() {
   const navigate = useNavigate()
   const { isAuthenticated, user, logout } = useAuth()
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const dropdownRef = useRef(null)
+  const mobileMenuRef = useRef(null)
 
   const role = user?.role || user?.accountType || 'student'
   const isAdmin = role === 'admin'
   const isEmployer = role === 'employer'
   const isCollegeAdmin = role === 'college_admin'
   const isInstructor = role === 'instructor'
+  // Colleges/Jobs/Online Classes/CV Maker are student-facing browse & tooling pages.
+  // Guests (not yet signed in) still see them so they know what the platform offers,
+  // but a signed-in employer/college admin/instructor/admin only needs their own
+  // role's dashboard and posting tools, not the student browse experience.
+  const isStudentView = !isAuthenticated || role === 'student'
+  const visibleNavItems = isStudentView ? navItems : navItems.filter((item) => item.to === '/')
 
-  // Close dropdown on outside click
+  // Close dropdown/mobile menu on outside click
   useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setDropdownOpen(false)
+      }
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target)) {
+        setMobileMenuOpen(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const handleLogout = async () => {
+  const closeMobileMenu = () => setMobileMenuOpen(false)
+  const [confirmLogout, setConfirmLogout] = useState(false)
+
+  const requestLogout = () => {
     setDropdownOpen(false)
+    setMobileMenuOpen(false)
+    setConfirmLogout(true)
+  }
+
+  const handleConfirmLogout = async () => {
+    setConfirmLogout(false)
     await logout()
     navigate('/login')
   }
@@ -47,29 +67,19 @@ function Navbar() {
     : 'U'
 
   return (
-    <header className="w-full bg-[#F7F8FA] border-b border-slate-200/80">
+    <header className="relative w-full bg-[#F7F8FA] border-b border-slate-200/80">
       <nav className="mx-auto box-border flex min-h-16 w-full max-w-6xl items-center justify-between gap-4 px-5 py-3 sm:px-8 lg:px-10 xl:px-0">
         {/* Brand Logo */}
         <Link
           to="/"
           className="flex min-w-fit items-center gap-3 text-left focus:outline-none focus:ring-2 focus:ring-[#5472FC] focus:ring-offset-2 rounded-xl p-1"
         >
-          <span className="flex h-8 w-8 min-w-8 items-center justify-center rounded-lg bg-[#2551D9] text-sm font-black text-white shadow-sm">
-            E
-          </span>
-          <span>
-            <span className="block text-sm font-black leading-tight text-slate-950">
-              EduPath
-            </span>
-            <span className="mt-0.5 block text-[10px] leading-tight text-slate-500">
-              College & Career Discovery
-            </span>
-          </span>
+          <img src="/logo.png" alt="EduPath" className="h-9 w-auto sm:h-10" />
         </Link>
 
         {/* Desktop Nav Items */}
         <div className="hidden flex-1 items-center justify-center gap-7 lg:flex">
-          {navItems.map((item) => (
+          {visibleNavItems.map((item) => (
             <NavLink
               key={item.label}
               to={item.to}
@@ -257,26 +267,30 @@ function Navbar() {
                     >
                       My Profile
                     </Link>
-                    <Link
-                      to="/applications"
-                      onClick={() => setDropdownOpen(false)}
-                      className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 hover:bg-[#F6F8FF] hover:text-[#2551D9]"
-                    >
-                      My Applications
-                    </Link>
-                    <Link
-                      to="/cv-maker"
-                      onClick={() => setDropdownOpen(false)}
-                      className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 hover:bg-[#F6F8FF] hover:text-[#2551D9]"
-                    >
-                      CV Maker
-                    </Link>
+                    {isStudentView && (
+                      <>
+                        <Link
+                          to="/applications"
+                          onClick={() => setDropdownOpen(false)}
+                          className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 hover:bg-[#F6F8FF] hover:text-[#2551D9]"
+                        >
+                          My Applications
+                        </Link>
+                        <Link
+                          to="/cv-maker"
+                          onClick={() => setDropdownOpen(false)}
+                          className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 hover:bg-[#F6F8FF] hover:text-[#2551D9]"
+                        >
+                          CV Maker
+                        </Link>
+                      </>
+                    )}
                   </div>
 
                   <div className="border-t border-slate-100 pt-1">
                     <button
                       type="button"
-                      onClick={handleLogout}
+                      onClick={requestLogout}
                       className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50"
                     >
                       Sign out
@@ -298,114 +312,210 @@ function Navbar() {
         </div>
 
         {/* Mobile Header Actions */}
-        <div className="flex items-center gap-2 lg:hidden">
-          {isAuthenticated ? (
-            <Link
-              to="/profile"
-              className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#E7EEFF] text-xs font-black text-[#2551D9]"
-              aria-label="View Profile"
+        <div className="flex items-center gap-2 lg:hidden" ref={mobileMenuRef}>
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen((prev) => !prev)}
+            aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-nav-menu"
+            aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition-colors hover:border-[#5472FC] focus:outline-none focus:ring-2 focus:ring-[#5472FC] focus:ring-offset-2"
+          >
+            {mobileMenuOpen ? (
+              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+              </svg>
+            )}
+          </button>
+
+          {/* Collapsible mobile menu panel */}
+          {mobileMenuOpen && (
+            <div
+              id="mobile-nav-menu"
+              className="absolute left-0 right-0 top-full z-40 border-t border-slate-200/80 bg-white shadow-lg"
             >
-              {initials}
-            </Link>
-          ) : (
-            <Link
-              to="/login"
-              className="rounded-xl bg-[#5472FC] px-3 py-1.5 text-xs font-bold text-white shadow-sm"
-            >
-              Sign In
-            </Link>
+              <div className="mx-auto flex w-full max-w-6xl flex-col gap-1 px-5 py-4 sm:px-8">
+                {visibleNavItems.map((item) => (
+                  <NavLink
+                    key={item.label}
+                    to={item.to}
+                    onClick={closeMobileMenu}
+                    className={({ isActive }) =>
+                      `rounded-xl px-3 py-2.5 text-sm font-bold transition-colors ${
+                        isActive ? 'bg-[#F6F8FF] text-[#2551D9]' : 'text-slate-700 hover:bg-slate-50'
+                      }`
+                    }
+                  >
+                    {item.label}
+                  </NavLink>
+                ))}
+
+                {isAuthenticated ? (
+                  <>
+                    <div className="my-2 border-t border-slate-100" />
+
+                    {isAdmin && (
+                      <NavLink
+                        to="/admin"
+                        onClick={closeMobileMenu}
+                        className={({ isActive }) =>
+                          `rounded-xl px-3 py-2.5 text-sm font-bold transition-colors ${
+                            isActive ? 'bg-purple-50 text-purple-700' : 'text-purple-600 hover:bg-purple-50'
+                          }`
+                        }
+                      >
+                        Admin Dashboard
+                      </NavLink>
+                    )}
+                    {isEmployer && (
+                      <>
+                        <NavLink
+                          to="/employer"
+                          onClick={closeMobileMenu}
+                          className={({ isActive }) =>
+                            `rounded-xl px-3 py-2.5 text-sm font-bold transition-colors ${
+                              isActive ? 'bg-emerald-50 text-emerald-700' : 'text-emerald-600 hover:bg-emerald-50'
+                            }`
+                          }
+                        >
+                          Employer Dashboard
+                        </NavLink>
+                        <Link
+                          to="/post-job"
+                          onClick={closeMobileMenu}
+                          className="rounded-xl px-3 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                        >
+                          Post Job
+                        </Link>
+                      </>
+                    )}
+                    {isCollegeAdmin && (
+                      <>
+                        <NavLink
+                          to="/college-admin"
+                          onClick={closeMobileMenu}
+                          className={({ isActive }) =>
+                            `rounded-xl px-3 py-2.5 text-sm font-bold transition-colors ${
+                              isActive ? 'bg-amber-50 text-amber-700' : 'text-amber-600 hover:bg-amber-50'
+                            }`
+                          }
+                        >
+                          College Admin Dashboard
+                        </NavLink>
+                        <Link
+                          to="/list-college"
+                          onClick={closeMobileMenu}
+                          className="rounded-xl px-3 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                        >
+                          List College
+                        </Link>
+                      </>
+                    )}
+                    {isInstructor && (
+                      <>
+                        <NavLink
+                          to="/instructor"
+                          onClick={closeMobileMenu}
+                          className={({ isActive }) =>
+                            `rounded-xl px-3 py-2.5 text-sm font-bold transition-colors ${
+                              isActive ? 'bg-pink-50 text-pink-700' : 'text-pink-600 hover:bg-pink-50'
+                            }`
+                          }
+                        >
+                          Instructor Dashboard
+                        </NavLink>
+                        <Link
+                          to="/post-class"
+                          onClick={closeMobileMenu}
+                          className="rounded-xl px-3 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                        >
+                          Post Class
+                        </Link>
+                      </>
+                    )}
+
+                    <NavLink
+                      to="/profile"
+                      onClick={closeMobileMenu}
+                      className={({ isActive }) =>
+                        `rounded-xl px-3 py-2.5 text-sm font-bold transition-colors ${
+                          isActive ? 'bg-[#F6F8FF] text-[#2551D9]' : 'text-slate-700 hover:bg-slate-50'
+                        }`
+                      }
+                    >
+                      My Profile
+                    </NavLink>
+                    {isStudentView && (
+                      <NavLink
+                        to="/applications"
+                        onClick={closeMobileMenu}
+                        className={({ isActive }) =>
+                          `rounded-xl px-3 py-2.5 text-sm font-bold transition-colors ${
+                            isActive ? 'bg-[#F6F8FF] text-[#2551D9]' : 'text-slate-700 hover:bg-slate-50'
+                          }`
+                        }
+                      >
+                        My Applications
+                      </NavLink>
+                    )}
+
+                    <div className="my-2 border-t border-slate-100" />
+                    <button
+                      type="button"
+                      onClick={requestLogout}
+                      className="rounded-xl px-3 py-2.5 text-left text-sm font-bold text-rose-600 hover:bg-rose-50"
+                    >
+                      Sign out
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div className="my-2 border-t border-slate-100" />
+                    <Link
+                      to="/login"
+                      onClick={closeMobileMenu}
+                      className="rounded-xl bg-[#5472FC] px-3 py-2.5 text-center text-sm font-black text-white shadow-sm transition-colors hover:bg-[#435DDE]"
+                    >
+                      Sign In
+                    </Link>
+                  </>
+                )}
+              </div>
+            </div>
           )}
         </div>
       </nav>
 
-      {/* Mobile Sub-Nav Scroll Bar */}
-      <div className="mx-auto flex w-full max-w-6xl gap-4 overflow-x-auto px-5 pb-3 sm:px-8 lg:hidden">
-        {navItems.map((item) => (
-          <NavLink
-            key={item.label}
-            to={item.to}
-            className={({ isActive }) =>
-              `whitespace-nowrap text-xs font-bold transition-colors hover:text-[#2551D9] ${
-                isActive ? 'text-[#2551D9]' : 'text-slate-600'
-              }`
-            }
-          >
-            {item.label}
-          </NavLink>
-        ))}
-        {isAuthenticated && (
-          <>
-            {isAdmin && (
-              <NavLink
-                to="/admin"
-                className={({ isActive }) =>
-                  `whitespace-nowrap text-xs font-bold transition-colors ${
-                    isActive ? 'text-[#2551D9]' : 'text-purple-600 font-bold'
-                  }`
-                }
+      {confirmLogout && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+            <h3 className="text-lg font-black text-slate-950">Sign out?</h3>
+            <p className="mt-2 text-sm text-slate-600 leading-relaxed">
+              Are you sure you want to sign out of your account?
+            </p>
+            <div className="mt-5 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setConfirmLogout(false)}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50"
               >
-                Admin
-              </NavLink>
-            )}
-            {isEmployer && (
-              <NavLink
-                to="/employer"
-                className={({ isActive }) =>
-                  `whitespace-nowrap text-xs font-bold transition-colors ${
-                    isActive ? 'text-[#2551D9]' : 'text-emerald-600 font-bold'
-                  }`
-                }
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmLogout}
+                className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-rose-700"
               >
-                Employer
-              </NavLink>
-            )}
-            {isCollegeAdmin && (
-              <NavLink
-                to="/college-admin"
-                className={({ isActive }) =>
-                  `whitespace-nowrap text-xs font-bold transition-colors ${
-                    isActive ? 'text-[#2551D9]' : 'text-amber-600 font-bold'
-                  }`
-                }
-              >
-                College Admin
-              </NavLink>
-            )}
-            {isInstructor && (
-              <NavLink
-                to="/instructor"
-                className={({ isActive }) =>
-                  `whitespace-nowrap text-xs font-bold transition-colors ${
-                    isActive ? 'text-[#2551D9]' : 'text-pink-600 font-bold'
-                  }`
-                }
-              >
-                Instructor
-              </NavLink>
-            )}
-            <NavLink
-              to="/profile"
-              className={({ isActive }) =>
-                `whitespace-nowrap text-xs font-bold transition-colors ${
-                  isActive ? 'text-[#2551D9]' : 'text-slate-600'
-                }`
-              }
-            >
-              Profile
-            </NavLink>
-            <NavLink
-              to="/applications"
-              className={({ isActive }) =>
-                `whitespace-nowrap text-xs font-bold transition-colors ${
-                  isActive ? 'text-[#2551D9]' : 'text-slate-600'
-                }`
-              }
-            >
-              Applications
-            </NavLink>
-          </>
-        )}
-      </div>
+                Confirm Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   )
 }

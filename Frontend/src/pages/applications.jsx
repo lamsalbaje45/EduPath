@@ -142,7 +142,7 @@ function Applications() {
         {/* Action Alerts */}
         {actionSuccess && (
           <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-emerald-800">
-            ✓ {actionSuccess}
+            {actionSuccess}
           </div>
         )}
         {error && (
@@ -289,10 +289,9 @@ function Applications() {
 
                     {canWithdraw && (
                       <Button
-                        variant="danger"
+                        variant="dangerSoft"
                         size="sm"
                         onClick={() => setWithdrawModalApp(app)}
-                        className="bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200"
                       >
                         Withdraw Application
                       </Button>

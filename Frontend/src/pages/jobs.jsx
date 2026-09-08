@@ -522,13 +522,12 @@ function JobsListing() {
                           <div className="mb-3 space-y-1 text-sm text-gray-600">
                             {opportunity.location && (
                               <p className="flex items-center gap-1">
-                                <span>📍</span>
                                 <span>{opportunity.location}</span>
                               </p>
                             )}
                             {opportunity.stipendOrSalaryRange && (
                               <p className="font-semibold text-slate-900">
-                                💵 {opportunity.stipendOrSalaryRange}
+                                {opportunity.stipendOrSalaryRange}
                               </p>
                             )}
                           </div>
@@ -559,7 +558,7 @@ function JobsListing() {
                               isClosed ? "text-red-600" : "text-emerald-700"
                             }`}
                           >
-                            ⏳ {deadlineText}
+                            {deadlineText}
                           </p>
 
                           {/* View details button */}

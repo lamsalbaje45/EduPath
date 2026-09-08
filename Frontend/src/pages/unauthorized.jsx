@@ -12,9 +12,6 @@ function Unauthorized() {
     <main className="min-h-[80vh] flex items-center justify-center bg-[#F7F8FA] px-5 py-16 text-slate-950">
       <div className="w-full max-w-lg text-center">
         <Card className="p-8 sm:p-10">
-          <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-3xl bg-rose-50 text-4xl font-black text-rose-600 border border-rose-200">
-            🔒
-          </div>
           <p className="text-xs font-black uppercase tracking-[0.2em] text-rose-600">
             403 Access Denied
           </p>

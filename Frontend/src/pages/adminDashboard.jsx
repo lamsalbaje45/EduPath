@@ -93,6 +93,13 @@ function AdminDashboard() {
   // Inquiries Sub-states
   const [viewingInquiry, setViewingInquiry] = useState(null);
 
+  // Approve/Reject Confirmation State: { type: 'college' | 'opportunity' | 'class', id, status, name }
+  const [confirmApproval, setConfirmApproval] = useState(null);
+
+  // User Management Confirmation States
+  const [confirmStatusToggle, setConfirmStatusToggle] = useState(null); // { userId, currentStatus, name }
+  const [confirmRoleChange, setConfirmRoleChange] = useState(null); // { userId, currentRole, newRole, name }
+
   // Fetch All Platform Data
   const fetchAllData = useCallback(async () => {
     setLoading(true);
@@ -176,6 +183,15 @@ function AdminDashboard() {
     }
   };
 
+  const handleConfirmApprovalAction = async () => {
+    if (!confirmApproval) return;
+    const { type, id, status } = confirmApproval;
+    if (type === "college") await handleUpdateCollegeApproval(id, status);
+    else if (type === "opportunity") await handleUpdateOpportunityApproval(id, status);
+    else if (type === "class") await handleUpdateOnlineClassApproval(id, status);
+    setConfirmApproval(null);
+  };
+
   // --- USER MANAGEMENT ACTIONS ---
   const handleUserRoleChange = async (userId, newRole) => {
     setRowActionId(`usr_role_${userId}`);
@@ -206,6 +222,18 @@ function AdminDashboard() {
     } finally {
       setRowActionId(null);
     }
+  };
+
+  const handleConfirmRoleChange = async () => {
+    if (!confirmRoleChange) return;
+    await handleUserRoleChange(confirmRoleChange.userId, confirmRoleChange.newRole);
+    setConfirmRoleChange(null);
+  };
+
+  const handleConfirmStatusToggle = async () => {
+    if (!confirmStatusToggle) return;
+    await handleUserStatusToggle(confirmStatusToggle.userId, confirmStatusToggle.currentStatus);
+    setConfirmStatusToggle(null);
   };
 
   // --- INQUIRY ACTIONS ---
@@ -263,10 +291,10 @@ function AdminDashboard() {
 
             <nav className="flex lg:flex-col gap-1 overflow-x-auto">
               {[
-                { id: "overview", label: "📊 System Overview" },
-                { id: "approvals", label: `🛡️ Approvals (${totalPendingListings})` },
-                { id: "users", label: `👥 Users (${users.length})` },
-                { id: "inquiries", label: `💬 Inquiries (${inquiries.length})` },
+                { id: "overview", label: "System Overview" },
+                { id: "approvals", label: `Approvals (${totalPendingListings})` },
+                { id: "users", label: `Users (${users.length})` },
+                { id: "inquiries", label: `Inquiries (${inquiries.length})` },
               ].map((sec) => (
                 <button
                   key={sec.id}
@@ -290,7 +318,7 @@ function AdminDashboard() {
           {/* Global Toast & Error Notices */}
           {toastMessage && (
             <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-xs font-bold text-emerald-800 animate-in fade-in">
-              ✓ {toastMessage}
+              {toastMessage}
             </div>
           )}
           {error && (
@@ -460,24 +488,31 @@ function AdminDashboard() {
                               </div>
 
                               <div className="flex items-center gap-2">
-                                <Button
-                                  variant="primary"
-                                  size="sm"
-                                  loading={isActing}
-                                  onClick={() => handleUpdateCollegeApproval(id, "approved")}
-                                  className="bg-emerald-600 hover:bg-emerald-700"
-                                >
-                                  ✓ Approve
-                                </Button>
-                                <Button
-                                  variant="danger"
-                                  size="sm"
-                                  loading={isActing}
-                                  onClick={() => handleUpdateCollegeApproval(id, "rejected")}
-                                  className="bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200"
-                                >
-                                  ✕ Reject
-                                </Button>
+                                {status !== "approved" && (
+                                  <Button
+                                    variant="primary"
+                                    size="sm"
+                                    loading={isActing}
+                                    onClick={() =>
+                                      setConfirmApproval({ type: "college", id, status: "approved", name: c.collegeName })
+                                    }
+                                    className="bg-emerald-600 hover:bg-emerald-700"
+                                  >
+                                    Approve
+                                  </Button>
+                                )}
+                                {status !== "rejected" && (
+                                  <Button
+                                    variant="dangerSoft"
+                                    size="sm"
+                                    loading={isActing}
+                                    onClick={() =>
+                                      setConfirmApproval({ type: "college", id, status: "rejected", name: c.collegeName })
+                                    }
+                                  >
+                                    Reject
+                                  </Button>
+                                )}
                               </div>
                             </Card>
                           );
@@ -513,24 +548,31 @@ function AdminDashboard() {
                               </div>
 
                               <div className="flex items-center gap-2">
-                                <Button
-                                  variant="primary"
-                                  size="sm"
-                                  loading={isActing}
-                                  onClick={() => handleUpdateOpportunityApproval(id, "approved")}
-                                  className="bg-emerald-600 hover:bg-emerald-700"
-                                >
-                                  ✓ Approve
-                                </Button>
-                                <Button
-                                  variant="danger"
-                                  size="sm"
-                                  loading={isActing}
-                                  onClick={() => handleUpdateOpportunityApproval(id, "rejected")}
-                                  className="bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200"
-                                >
-                                  ✕ Reject
-                                </Button>
+                                {status !== "approved" && (
+                                  <Button
+                                    variant="primary"
+                                    size="sm"
+                                    loading={isActing}
+                                    onClick={() =>
+                                      setConfirmApproval({ type: "opportunity", id, status: "approved", name: o.title })
+                                    }
+                                    className="bg-emerald-600 hover:bg-emerald-700"
+                                  >
+                                    Approve
+                                  </Button>
+                                )}
+                                {status !== "rejected" && (
+                                  <Button
+                                    variant="dangerSoft"
+                                    size="sm"
+                                    loading={isActing}
+                                    onClick={() =>
+                                      setConfirmApproval({ type: "opportunity", id, status: "rejected", name: o.title })
+                                    }
+                                  >
+                                    Reject
+                                  </Button>
+                                )}
                               </div>
                             </Card>
                           );
@@ -566,24 +608,31 @@ function AdminDashboard() {
                               </div>
 
                               <div className="flex items-center gap-2">
-                                <Button
-                                  variant="primary"
-                                  size="sm"
-                                  loading={isActing}
-                                  onClick={() => handleUpdateOnlineClassApproval(id, "approved")}
-                                  className="bg-emerald-600 hover:bg-emerald-700"
-                                >
-                                  ✓ Approve
-                                </Button>
-                                <Button
-                                  variant="danger"
-                                  size="sm"
-                                  loading={isActing}
-                                  onClick={() => handleUpdateOnlineClassApproval(id, "rejected")}
-                                  className="bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200"
-                                >
-                                  ✕ Reject
-                                </Button>
+                                {status !== "approved" && (
+                                  <Button
+                                    variant="primary"
+                                    size="sm"
+                                    loading={isActing}
+                                    onClick={() =>
+                                      setConfirmApproval({ type: "class", id, status: "approved", name: cls.classTitle })
+                                    }
+                                    className="bg-emerald-600 hover:bg-emerald-700"
+                                  >
+                                    Approve
+                                  </Button>
+                                )}
+                                {status !== "rejected" && (
+                                  <Button
+                                    variant="dangerSoft"
+                                    size="sm"
+                                    loading={isActing}
+                                    onClick={() =>
+                                      setConfirmApproval({ type: "class", id, status: "rejected", name: cls.classTitle })
+                                    }
+                                  >
+                                    Reject
+                                  </Button>
+                                )}
                               </div>
                             </Card>
                           );
@@ -650,7 +699,16 @@ function AdminDashboard() {
                                 <select
                                   value={role}
                                   disabled={isRoleActing}
-                                  onChange={(e) => handleUserRoleChange(uId, e.target.value)}
+                                  onChange={(e) => {
+                                    const newRole = e.target.value;
+                                    if (newRole === role) return;
+                                    setConfirmRoleChange({
+                                      userId: uId,
+                                      currentRole: role,
+                                      newRole,
+                                      name: u.fullName || u.email,
+                                    });
+                                  }}
                                   className="rounded-xl border border-slate-200 bg-white px-2.5 py-1 text-xs font-black text-slate-800 focus:border-[#5472FC] focus:outline-none"
                                 >
                                   {ROLE_OPTIONS.map((r) => (
@@ -672,15 +730,21 @@ function AdminDashboard() {
                                     size="sm"
                                     onClick={() => setViewingStudentProfile(u)}
                                   >
-                                    👤 Profile
+                                    Profile
                                   </Button>
                                 )}
                                 <Button
-                                  variant={status === "suspended" ? "primary" : "danger"}
+                                  variant={status === "suspended" ? "primary" : "dangerSoft"}
                                   size="sm"
                                   loading={isStatusActing}
-                                  onClick={() => handleUserStatusToggle(uId, status)}
-                                  className={status === "suspended" ? "bg-emerald-600 hover:bg-emerald-700" : "bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100"}
+                                  onClick={() =>
+                                    setConfirmStatusToggle({
+                                      userId: uId,
+                                      currentStatus: status,
+                                      name: u.fullName || u.email,
+                                    })
+                                  }
+                                  className={status === "suspended" ? "bg-emerald-600 hover:bg-emerald-700" : ""}
                                 >
                                   {status === "suspended" ? "Reactivate" : "Suspend"}
                                 </Button>
@@ -750,7 +814,7 @@ function AdminDashboard() {
                                   size="sm"
                                   onClick={() => setViewingInquiry(inq)}
                                 >
-                                  🔍 View Full
+                                  View Full
                                 </Button>
                               </td>
                             </tr>
@@ -823,6 +887,118 @@ function AdminDashboard() {
                 onClick={() => setViewingInquiry(null)}
               >
                 Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* APPROVE/REJECT CONFIRMATION MODAL */}
+      {confirmApproval && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+            <h3 className="text-xl font-black text-slate-950">
+              {confirmApproval.status === "approved" ? "Approve" : "Reject"} this listing?
+            </h3>
+            <p className="mt-2 text-sm text-slate-600 leading-relaxed">
+              Are you sure you want to {confirmApproval.status === "approved" ? "approve" : "reject"}{" "}
+              <strong>{confirmApproval.name}</strong>? This will update its status immediately and be visible to the listing owner.
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <Button
+                variant="outline"
+                size="md"
+                onClick={() => setConfirmApproval(null)}
+                disabled={rowActionId !== null}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant={confirmApproval.status === "approved" ? "primary" : "danger"}
+                size="md"
+                onClick={handleConfirmApprovalAction}
+                loading={rowActionId !== null}
+                className={
+                  confirmApproval.status === "approved"
+                    ? "bg-emerald-600 hover:bg-emerald-700"
+                    : "bg-rose-600 hover:bg-rose-700 text-white"
+                }
+              >
+                {confirmApproval.status === "approved" ? "Confirm Approve" : "Confirm Reject"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ROLE CHANGE CONFIRMATION MODAL */}
+      {confirmRoleChange && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+            <h3 className="text-xl font-black text-slate-950">Change user role?</h3>
+            <p className="mt-2 text-sm text-slate-600 leading-relaxed">
+              Are you sure you want to change <strong>{confirmRoleChange.name}</strong>'s role from{" "}
+              <strong>{ROLE_OPTIONS.find((r) => r.value === confirmRoleChange.currentRole)?.label || confirmRoleChange.currentRole}</strong> to{" "}
+              <strong>{ROLE_OPTIONS.find((r) => r.value === confirmRoleChange.newRole)?.label || confirmRoleChange.newRole}</strong>?
+              This changes what they can access immediately.
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <Button
+                variant="outline"
+                size="md"
+                onClick={() => setConfirmRoleChange(null)}
+                disabled={rowActionId !== null}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                size="md"
+                onClick={handleConfirmRoleChange}
+                loading={rowActionId !== null}
+              >
+                Confirm Change
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* USER STATUS TOGGLE CONFIRMATION MODAL */}
+      {confirmStatusToggle && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+            <h3 className="text-xl font-black text-slate-950">
+              {confirmStatusToggle.currentStatus === "suspended" ? "Reactivate" : "Suspend"} this user?
+            </h3>
+            <p className="mt-2 text-sm text-slate-600 leading-relaxed">
+              Are you sure you want to {confirmStatusToggle.currentStatus === "suspended" ? "reactivate" : "suspend"}{" "}
+              <strong>{confirmStatusToggle.name}</strong>?{" "}
+              {confirmStatusToggle.currentStatus === "suspended"
+                ? "They will regain access to their account."
+                : "They will lose access to their account immediately."}
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <Button
+                variant="outline"
+                size="md"
+                onClick={() => setConfirmStatusToggle(null)}
+                disabled={rowActionId !== null}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant={confirmStatusToggle.currentStatus === "suspended" ? "primary" : "danger"}
+                size="md"
+                onClick={handleConfirmStatusToggle}
+                loading={rowActionId !== null}
+                className={
+                  confirmStatusToggle.currentStatus === "suspended"
+                    ? "bg-emerald-600 hover:bg-emerald-700"
+                    : "bg-rose-600 hover:bg-rose-700 text-white"
+                }
+              >
+                {confirmStatusToggle.currentStatus === "suspended" ? "Confirm Reactivate" : "Confirm Suspend"}
               </Button>
             </div>
           </div>

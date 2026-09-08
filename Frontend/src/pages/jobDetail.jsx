@@ -285,7 +285,7 @@ function JobDetail() {
               <div className="mt-5 space-y-1.5 text-sm text-gray-700">
                 {opportunity.location && (
                   <p className="flex items-center gap-1">
-                    <span>📍 Location:</span>
+                    <span>Location:</span>
                     <span className="font-medium text-slate-900">
                       {opportunity.location}
                     </span>
@@ -293,14 +293,14 @@ function JobDetail() {
                 )}
                 {opportunity.stipendOrSalaryRange && (
                   <p className="flex items-center gap-1">
-                    <span>💵 Stipend / Salary:</span>
+                    <span>Stipend / Salary:</span>
                     <span className="font-semibold text-slate-950">
                       {opportunity.stipendOrSalaryRange}
                     </span>
                   </p>
                 )}
                 <p className="flex items-center gap-1">
-                  <span>⏳ Deadline:</span>
+                  <span>Deadline:</span>
                   <span className="font-medium text-slate-900">
                     {formatDeadline(opportunity.applicationDeadline)}
                     {isClosed && " (Closed)"}
@@ -342,7 +342,7 @@ function JobDetail() {
                 onClick={handleToggleSaveJob}
                 className="whitespace-nowrap"
               >
-                {isSaved ? "❤️ Saved" : "🤍 Save Job"}
+                {isSaved ? "Saved" : "Save Job"}
               </Button>
             </div>
           </div>
@@ -459,7 +459,7 @@ function JobDetail() {
 
             {applicationSuccess && (
               <div className="mb-4 rounded-lg bg-green-50 p-3.5 text-sm font-medium text-green-700">
-                ✓ Your application has been submitted successfully!
+                Your application has been submitted successfully!
               </div>
             )}
             {applicationError && (
@@ -498,7 +498,7 @@ function JobDetail() {
                   </div>
                 ) : hasCv ? (
                   <p className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800">
-                    ✓ Your CV from CV Maker will be attached automatically.
+                    Your CV from CV Maker will be attached automatically.
                   </p>
                 ) : (
                   <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">

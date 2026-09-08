@@ -10,6 +10,7 @@ import Navbar from "./pages/navbar";
 import Footer from "./pages/footer";
 import Register from "./pages/register";
 import Profile from "./pages/profile";
+import Matches from "./pages/matches";
 import Colleges from "./pages/colleges";
 import CollegeDetail from "./pages/collegeDetail";
 import Jobs from "./pages/jobs";
@@ -80,6 +81,15 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <Applications />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/matches"
+          element={
+            <ProtectedRoute>
+              <Matches />
             </ProtectedRoute>
           }
         />

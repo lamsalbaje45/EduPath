@@ -463,7 +463,7 @@ function OnlineClassesListing() {
                             )}
                             {cls.certificateAvailability && (
                               <Badge variant="warning" size="sm">
-                                🎓 Certificate
+                                Certificate
                               </Badge>
                             )}
                           </div>
@@ -472,13 +472,11 @@ function OnlineClassesListing() {
                           <div className="mb-3 space-y-1 text-sm text-gray-600">
                             {cls.duration && (
                               <p className="flex items-center gap-1">
-                                <span>⏱️</span>
                                 <span>Duration: {cls.duration}</span>
                               </p>
                             )}
                             {cls.schedule && (
                               <p className="flex items-center gap-1">
-                                <span>📅</span>
                                 <span>{cls.schedule}</span>
                               </p>
                             )}

@@ -10,6 +10,14 @@ const variants = {
   ghost: "text-[#5472FC] hover:bg-[#5472FC]/10 hover:text-[#2551D9]",
   secondary: "bg-slate-100 text-slate-900 hover:bg-slate-200",
   danger: "bg-red-600 text-white hover:bg-red-700 active:bg-red-800",
+  // Light/soft danger style for inline row actions (e.g. Delete, Reject, Suspend)
+  // where a solid red button would be too visually heavy. Defined as its own
+  // variant rather than "danger" + an overriding className, because Tailwind's
+  // generated stylesheet order -- not JSX class order -- decides which of two
+  // conflicting utilities (e.g. text-white vs text-rose-700) wins, which made
+  // that combination render invisible white text on a near-white background.
+  dangerSoft:
+    "bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100",
 };
 
 const sizes = {

@@ -45,17 +45,10 @@ function ListCollege() {
   });
 
   // Array Tag Input States
-  const [courses, setCourses] = useState([
-    "Computer Science (BCA)",
-    "Business Administration (BBA)",
-  ]);
+  const [courses, setCourses] = useState([]);
   const [courseInput, setCourseInput] = useState("");
 
-  const [facilities, setFacilities] = useState([
-    "Digital Library",
-    "Computer Labs",
-    "Sports Complex",
-  ]);
+  const [facilities, setFacilities] = useState([]);
   const [facilityInput, setFacilityInput] = useState("");
 
   const [images, setImages] = useState([]);
@@ -158,9 +151,6 @@ function ListCollege() {
       <main className="min-h-screen bg-[#F7F8FA] py-12 text-slate-950">
         <div className="mx-auto max-w-2xl px-5">
           <Card className="p-8 text-center sm:p-10">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-50 text-3xl border border-amber-200">
-              ⏳
-            </div>
             <span className="inline-block rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-800 uppercase tracking-wider">
               Pending Approval
             </span>

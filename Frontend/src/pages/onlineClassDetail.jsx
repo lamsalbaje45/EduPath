@@ -233,7 +233,7 @@ function OnlineClassDetail() {
                 )}
                 {onlineClass.certificateAvailability && (
                   <Badge variant="warning" size="md">
-                    🎓 Certificate Provided
+                    Certificate Provided
                   </Badge>
                 )}
               </div>
@@ -242,21 +242,21 @@ function OnlineClassDetail() {
               <div className="mt-5 space-y-1.5 text-sm text-gray-700">
                 {onlineClass.duration && (
                   <p className="flex items-center gap-2">
-                    <span>⏱️ Duration:</span>
+                    <span>Duration:</span>
                     <span className="font-semibold text-slate-900">
                       {onlineClass.duration}
                     </span>
                   </p>
                 )}
                 <p className="flex items-center gap-2">
-                  <span>📅 Start Date:</span>
+                  <span>Start Date:</span>
                   <span className="font-semibold text-slate-900">
                     {formatStartDate(onlineClass.startDate)}
                   </span>
                 </p>
                 {onlineClass.schedule && (
                   <p className="flex items-center gap-2">
-                    <span>🗓️ Schedule:</span>
+                    <span>Schedule:</span>
                     <span className="font-medium text-slate-900">
                       {onlineClass.schedule}
                     </span>
@@ -350,7 +350,6 @@ function OnlineClassDetail() {
               {onlineClass.certificateAvailability ? (
                 <div className="rounded-xl bg-amber-50 p-4 text-amber-900 border border-amber-200/60">
                   <div className="flex items-center gap-2 font-bold text-amber-950">
-                    <span className="text-xl">🎓</span>
                     <span>Certificate Included</span>
                   </div>
                   <p className="mt-1 text-xs text-amber-800 leading-relaxed">
@@ -360,7 +359,6 @@ function OnlineClassDetail() {
               ) : (
                 <div className="rounded-xl bg-gray-50 p-4 text-gray-700 border border-gray-200">
                   <div className="flex items-center gap-2 font-bold text-gray-900">
-                    <span>📜</span>
                     <span>No Certificate Offered</span>
                   </div>
                   <p className="mt-1 text-xs text-gray-600 leading-relaxed">
@@ -423,7 +421,7 @@ function OnlineClassDetail() {
 
             {inquireSuccess && (
               <div className="mb-4 rounded-lg bg-green-50 p-3 text-sm text-green-700">
-                ✓ Your inquiry has been sent to the instructor. They will contact you shortly!
+                Your inquiry has been sent to the instructor. They will contact you shortly!
               </div>
             )}
 

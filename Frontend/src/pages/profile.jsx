@@ -80,6 +80,29 @@ const ROLE_DASHBOARD_LINKS = {
 const MAX_AVATAR_SIZE = 2 * 1024 * 1024; // 2MB, matches backend limit
 const ALLOWED_AVATAR_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 
+// Only students have a rich profile schema (Backend/models/user.js studentProfile);
+// other roles just have the base account fields, so they're scored on a smaller checklist.
+function calculateProfileStrength(data, isStudentRole) {
+  const checks = isStudentRole
+    ? [
+        Boolean(data.profileImage),
+        Boolean(data.phone),
+        Boolean(data.address),
+        Boolean(data.bio),
+        Boolean(data.educationLevel),
+        Boolean(data.currentCourse),
+        Boolean(data.preferredOpportunityType),
+        (data.preferredCourses || []).length > 0,
+        (data.preferredCities || []).length > 0,
+        (data.skills || []).length > 0,
+        (data.careerInterests || []).length > 0,
+      ]
+    : [Boolean(data.profileImage), Boolean(data.phone)];
+
+  const filled = checks.filter(Boolean).length;
+  return Math.round((filled / checks.length) * 100);
+}
+
 function Profile() {
   const navigate = useNavigate();
   const { user, logout, updateUser } = useAuth();
@@ -302,13 +325,17 @@ function Profile() {
     }
   };
 
-  const handleLogout = () => {
+  const [confirmLogout, setConfirmLogout] = useState(false);
+
+  const handleConfirmLogout = () => {
+    setConfirmLogout(false);
     logout();
     navigate("/login");
   };
 
   const fullName = `${profileData.firstName} ${profileData.lastName}`.trim() || "Student User";
   const initials = `${(profileData.firstName[0] || "S").toUpperCase()}${(profileData.lastName[0] || "U").toUpperCase()}`;
+  const profileStrength = calculateProfileStrength(profileData, isStudent);
   const displayData = editing ? draft : profileData;
 
   // Helper formatting for status badges in My Applications
@@ -360,7 +387,7 @@ function Profile() {
             )}
             <button
               type="button"
-              onClick={handleLogout}
+              onClick={() => setConfirmLogout(true)}
               className="rounded-xl border border-rose-200 bg-rose-50 px-5 py-3 text-xs font-black text-rose-700 transition-colors hover:bg-rose-100"
             >
               Sign out ➔
@@ -422,10 +449,13 @@ function Profile() {
               <div className="rounded-xl border border-[#D9E2FF] bg-[#F6F8FF] px-4 py-3 sm:mb-1">
                 <div className="flex items-center justify-between gap-6">
                   <p className="text-xs font-black text-slate-700">Profile strength</p>
-                  <p className="text-xs font-black text-[#2551D9]">90%</p>
+                  <p className="text-xs font-black text-[#2551D9]">{profileStrength}%</p>
                 </div>
                 <div className="mt-2 h-1.5 w-36 overflow-hidden rounded-full bg-[#D9E2FF]">
-                  <div className="h-full w-11/12 rounded-full bg-[#5472FC]" />
+                  <div
+                    className="h-full rounded-full bg-[#5472FC] transition-all"
+                    style={{ width: `${profileStrength}%` }}
+                  />
                 </div>
               </div>
             </div>
@@ -500,7 +530,7 @@ function Profile() {
         {/* Alerts */}
         {saveSuccess && (
           <div className="mb-6 rounded-xl bg-emerald-50 p-4 text-sm font-bold text-emerald-800 border border-emerald-200">
-            ✓ Profile details updated successfully!
+            Profile details updated successfully!
           </div>
         )}
         {saveError && (
@@ -648,7 +678,7 @@ function Profile() {
                                 key={city}
                                 className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-bold text-slate-600"
                               >
-                                📍 {city}
+                                {city}
                               </span>
                             ))}
                           </div>
@@ -812,7 +842,7 @@ function Profile() {
                         {college.admissionStatus === "open" ? "Open" : "Closed"}
                       </Badge>
                       <span className="text-xs font-bold text-amber-500">
-                        ★ {college.rating}
+                        {college.rating} / 5
                       </span>
                     </div>
                   </Card>
@@ -933,6 +963,30 @@ function Profile() {
           </section>
         )}
       </div>
+
+      {confirmLogout && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+            <h3 className="text-lg font-black text-slate-950">Sign out?</h3>
+            <p className="mt-2 text-sm text-slate-600 leading-relaxed">
+              Are you sure you want to sign out of your account?
+            </p>
+            <div className="mt-5 flex justify-end gap-3">
+              <Button variant="outline" size="md" onClick={() => setConfirmLogout(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                size="md"
+                onClick={handleConfirmLogout}
+                className="bg-rose-600 hover:bg-rose-700 text-white"
+              >
+                Confirm Sign Out
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

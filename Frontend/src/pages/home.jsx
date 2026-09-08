@@ -69,31 +69,26 @@ const howItWorksSteps = [
 const dashboardCards = [
   {
     title: 'Student',
-    icon: '🎓',
     text: 'Saved colleges, saved jobs, applications, and profile.',
     getHref: (authed) => (authed ? '/profile' : '/register'),
   },
   {
     title: 'College',
-    icon: '🏫',
     text: 'Profile, courses, inquiries, admission status, and analytics.',
     getHref: () => '/list-college',
   },
   {
     title: 'Employer',
-    icon: '💼',
     text: 'Post jobs, view applicants, and shortlist students.',
     getHref: () => '/post-job',
   },
   {
     title: 'Instructor',
-    icon: '📚',
     text: 'Post online classes, manage enrollments, and share learning materials.',
     getHref: () => '/post-class',
   },
   {
     title: 'CV Maker',
-    icon: '📝',
     text: 'Students can build CVs and use them while applying for internships or jobs.',
     getHref: () => '/cv-maker',
   },
@@ -152,6 +147,7 @@ function formatRecommendationItem(item) {
       label: 'College Match',
       title: item.collegeName,
       meta: `${item.courses?.[0] || 'Degree'} - ${item.city || 'Nepal'} - Scholarship available`,
+      matchPercentage: item.matchPercentage,
     }
   }
   if (item.companyName || item.type) {
@@ -160,6 +156,7 @@ function formatRecommendationItem(item) {
       label: item.type === 'internship' ? 'Internship Match' : 'Job Match',
       title: item.title,
       meta: `${item.companyName} - ${item.workMode || item.location || 'Onsite'} - ${item.stipendOrSalaryRange || 'Competitive'}`,
+      matchPercentage: item.matchPercentage,
     }
   }
   if (item.classTitle) {
@@ -168,6 +165,7 @@ function formatRecommendationItem(item) {
       label: 'Online Class',
       title: item.classTitle,
       meta: `${item.mode || 'Live class'} - ${item.duration || 'Flexible'} - ${item.certificateAvailability ? 'Certificate' : 'Course'}`,
+      matchPercentage: item.matchPercentage,
     }
   }
   return {
@@ -175,6 +173,7 @@ function formatRecommendationItem(item) {
     label: item.label || 'Recommendation',
     title: item.title || item.name || 'Recommended Item',
     meta: item.meta || item.description || '',
+    matchPercentage: item.matchPercentage,
   }
 }
 
@@ -322,9 +321,6 @@ function TestimonialCard({ testimonial }) {
         <div className="min-w-0">
           <h3 className="text-lg font-black leading-tight text-slate-950">{testimonial.name}</h3>
           <p className="mt-1 text-sm text-slate-500">{testimonial.location}</p>
-          <p className="mt-1 text-[17px] leading-none tracking-[0.16em] text-amber-400" aria-label="5 out of 5 stars">
-            ★★★★★
-          </p>
         </div>
       </div>
       <p className="mt-5 text-sm leading-6 text-slate-600">{testimonial.text}</p>
@@ -338,6 +334,12 @@ const selectClass =
 function Home() {
   const navigate = useNavigate()
   const { isAuthenticated, user } = useAuth()
+  const role = user?.role || user?.accountType || 'student'
+  // Recommendations (colleges/jobs/classes matched to a profile) are a student-only
+  // concept -- an employer/college admin/instructor/admin has no studentProfile for
+  // this to be computed from. Guests still see it as a preview of what signing up
+  // as a student gets them.
+  const isStudentView = !isAuthenticated || role === 'student'
 
   const [recommendations, setRecommendations] = useState(defaultStaticRecommendations)
   const [loadingRecs, setLoadingRecs] = useState(false)
@@ -358,7 +360,7 @@ function Home() {
   useEffect(() => {
     let isMounted = true
 
-    if (isAuthenticated) {
+    if (isAuthenticated && isStudentView) {
       setLoadingRecs(true)
 
       api
@@ -402,7 +404,32 @@ function Home() {
     return () => {
       isMounted = false
     }
-  }, [isAuthenticated])
+  }, [isAuthenticated, isStudentView])
+
+  // Home page preview shows only the single best match per category (college,
+  // job/internship, class); the full ranked list lives on the Matches page.
+  const RECOMMENDATION_CATEGORY = {
+    'College Match': 'college',
+    'Internship Match': 'opportunity',
+    'Job Match': 'opportunity',
+    'Online Class': 'class',
+  }
+  const topRecommendations = []
+  const seenCategories = new Set()
+  for (const item of recommendations) {
+    const category = RECOMMENDATION_CATEGORY[item.label] || item.label
+    if (seenCategories.has(category)) continue
+    seenCategories.add(category)
+    topRecommendations.push(item)
+  }
+  // Backend computes matchPercentage per item from actual profile overlap (skills,
+  // career interests, preferred courses/cities, etc. -- see recommendationService.js).
+  // The badge shows the strongest of the displayed matches; undefined for guests,
+  // since the demo data shown to them isn't a real computed match.
+  const matchPercentages = topRecommendations
+    .map((item) => item.matchPercentage)
+    .filter((pct) => typeof pct === 'number')
+  const bestMatchPercentage = matchPercentages.length ? Math.max(...matchPercentages) : null
 
   useEffect(() => {
     let isMounted = true
@@ -470,7 +497,7 @@ function Home() {
     <main className="overflow-x-hidden bg-white font-sans text-slate-950">
       <section className="bg-[#F7F8FA]">
         <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-12 px-5 pb-16 pt-14 sm:px-8 md:flex-row md:justify-between md:pb-20 md:pt-20 lg:px-10 xl:px-0">
-          <div className="w-full max-w-[620px] text-left">
+          <div className={`w-full text-left ${isStudentView ? 'max-w-[620px]' : 'max-w-2xl'}`}>
             <p className="mb-6 inline-flex rounded-full bg-[#E7EEFF] px-3 py-1.5 text-[11px] font-black text-[#2551D9]">
               Simple college-to-career platform
             </p>
@@ -502,6 +529,7 @@ function Home() {
             </div>
           </div>
 
+          {isStudentView && (
           <aside className="w-full max-w-[360px] shrink-0 rounded-2xl bg-white p-5 shadow-2xl shadow-slate-900/10">
             <div className="flex items-start justify-between gap-5">
               <div>
@@ -512,9 +540,11 @@ function Home() {
                   Best matches
                 </h2>
               </div>
-              <div className="flex h-14 w-14 min-w-14 items-center justify-center rounded-2xl bg-[#E7EEFF] text-xl font-black text-[#2551D9]">
-                94%
-              </div>
+              {bestMatchPercentage !== null && (
+                <div className="flex h-14 w-14 min-w-14 items-center justify-center rounded-2xl bg-[#E7EEFF] text-xl font-black text-[#2551D9]">
+                  {bestMatchPercentage}%
+                </div>
+              )}
             </div>
 
             <p className="mt-4 rounded-xl border border-gray-200 bg-[#F8FAFC] px-4 py-4 text-xs leading-5 text-slate-500">
@@ -529,13 +559,13 @@ function Home() {
                   <div className="mx-auto h-6 w-6 animate-spin rounded-full border-2 border-[#5472FC] border-t-transparent" />
                   <p className="text-xs text-slate-400 font-semibold">Loading recommendations...</p>
                 </div>
-              ) : recommendations.length === 0 ? (
+              ) : topRecommendations.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4 text-center">
                   <p className="text-xs font-bold text-slate-500">No recommendations found yet</p>
                   <p className="mt-1 text-[11px] text-slate-400">Complete your student profile to get personalized matches.</p>
                 </div>
               ) : (
-                recommendations.map((item, index) => (
+                topRecommendations.map((item, index) => (
                   <div
                     key={item.id || `${item.title}-${index}`}
                     className={`flex gap-3 rounded-xl border bg-white p-3 ${
@@ -545,8 +575,15 @@ function Home() {
                     <div className="flex h-7 w-7 min-w-7 items-center justify-center rounded-lg bg-[#F8FAFC] text-[11px] font-black text-[#2551D9] ring-1 ring-gray-200">
                       {index + 1}
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-[11px] font-black text-[#2551D9]">{item.label}</p>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-[11px] font-black text-[#2551D9]">{item.label}</p>
+                        {typeof item.matchPercentage === 'number' && (
+                          <span className="shrink-0 rounded-full bg-[#E7EEFF] px-2 py-0.5 text-[10px] font-black text-[#2551D9]">
+                            {item.matchPercentage}% match
+                          </span>
+                        )}
+                      </div>
                       <h3 className="mt-0.5 text-sm font-black leading-snug text-slate-950">
                         {item.title}
                       </h3>
@@ -560,7 +597,7 @@ function Home() {
             <div className="mt-4 grid grid-cols-2 gap-3">
               <button
                 type="button"
-                onClick={() => navigate(isAuthenticated ? '/profile' : '/login')}
+                onClick={() => navigate(isAuthenticated ? '/matches' : '/login')}
                 className="rounded-xl bg-[#5472FC] px-4 py-3 text-xs font-black text-white transition-colors hover:bg-[#435DDE] focus:outline-none focus:ring-2 focus:ring-[#5472FC] focus:ring-offset-2"
               >
                 {isAuthenticated ? 'View Matches' : 'Sign In'}
@@ -574,6 +611,7 @@ function Home() {
               </button>
             </div>
           </aside>
+          )}
         </div>
       </section>
 
@@ -796,7 +834,7 @@ function Home() {
               badge={
                 college.rating > 0 ? (
                   <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-black text-amber-600">
-                    ★ {college.rating.toFixed(1)}
+                    {college.rating.toFixed(1)} / 5
                   </span>
                 ) : null
               }
@@ -907,6 +945,10 @@ function Home() {
           </div>
         </section>
 
+        {/* This is a guest-facing pitch showing every role the platform supports.
+            Once signed in, the user already has direct nav access to their own role's
+            dashboard, so showing four other roles' cards is just noise -- hide it. */}
+        {!isAuthenticated && (
         <section className="border-t border-gray-200 py-16 text-center sm:py-20">
           <SectionLabel>For every role</SectionLabel>
           <h2 className="text-3xl font-black leading-tight text-slate-950 sm:text-[40px]">
@@ -920,8 +962,7 @@ function Home() {
                 onClick={() => navigate(card.getHref(isAuthenticated))}
                 className="group flex flex-col rounded-2xl border border-gray-200 bg-white p-5 text-left transition-all hover:-translate-y-1 hover:border-[#B8CAFF] hover:shadow-lg"
               >
-                <span className="text-2xl" aria-hidden="true">{card.icon}</span>
-                <h3 className="mt-3 text-base font-black text-slate-950 group-hover:text-[#2551D9]">
+                <h3 className="text-base font-black text-slate-950 group-hover:text-[#2551D9]">
                   {card.title}
                 </h3>
                 <p className="mt-3 text-sm leading-6 text-slate-500">{card.text}</p>
@@ -930,6 +971,7 @@ function Home() {
             ))}
           </div>
         </section>
+        )}
 
         <section className="pb-10">
           <div className="grid gap-8 rounded-2xl bg-[#2551D9] px-8 py-10 text-white sm:px-9 md:grid-cols-[1fr_auto] md:items-center">

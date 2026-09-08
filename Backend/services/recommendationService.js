@@ -24,6 +24,28 @@ function normalizeString(str) {
     return str ? str.toLowerCase().trim() : '';
 }
 
+// Highest score calculateXMatchScore() can produce for each category, i.e. the sum
+// of every individual point weight documented on that function. Used to normalize
+// the raw, category-specific score into a 0-100 percentage that's meaningful to
+// compare/display regardless of which category a recommendation came from.
+const MAX_MATCH_SCORE = {
+    college: 10 + 10 + 5 + 10, // courses + city + admissionOpen + rating
+    opportunity: 20 + 15 + 10 + 10 + 5 + 5, // skills + careerInterest + type + courses + location + deadline
+    class: 15 + 10 + 5 + 5 + 5, // skills + level + certificate + free + active
+};
+
+/**
+ * Normalize a raw match score into a 0-100 percentage for a given category.
+ * @param {number} score - Raw score from calculateXMatchScore()
+ * @param {'college'|'opportunity'|'class'} category
+ * @returns {number} Percentage 0-100
+ */
+function toMatchPercentage(score, category) {
+    const maxScore = MAX_MATCH_SCORE[category];
+    if (!maxScore) return 0;
+    return Math.max(0, Math.min(100, Math.round((score / maxScore) * 100)));
+}
+
 /**
  * Count matching items between two arrays
  * @param {Array} arr1 - First array
@@ -283,6 +305,7 @@ export async function getRecommendedOpportunities(studentId, options = {}) {
                 return {
                     ...opportunity,
                     matchScore: score,
+                    matchPercentage: toMatchPercentage(score, 'opportunity'),
                     matchDetails: matches,
                 };
             })
@@ -326,6 +349,7 @@ export async function getRecommendedColleges(studentId, options = {}) {
                 return {
                     ...college,
                     matchScore: score,
+                    matchPercentage: toMatchPercentage(score, 'college'),
                     matchDetails: matches,
                 };
             })
@@ -370,6 +394,7 @@ export async function getRecommendedClasses(studentId, options = {}) {
                 return {
                     ...onlineClass,
                     matchScore: score,
+                    matchPercentage: toMatchPercentage(score, 'class'),
                     matchDetails: matches,
                 };
             })

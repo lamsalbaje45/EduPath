@@ -197,23 +197,6 @@ function CollegeListing() {
     setCurrentPage(1);
   };
 
-  const starRating = (rating) => {
-    const stars = [];
-    for (let i = 0; i < 5; i++) {
-      stars.push(
-        <span
-          key={i}
-          className={
-            i < Math.floor(rating) ? "text-amber-400" : "text-gray-300"
-          }
-        >
-          ★
-        </span>,
-      );
-    }
-    return stars;
-  };
-
   return (
     <main className="bg-white">
       <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8 lg:px-10">
@@ -420,11 +403,8 @@ function CollegeListing() {
 
                         {/* Rating */}
                         <div className="mb-3 flex items-center gap-2">
-                          <div className="flex gap-0.5">
-                            {starRating(college.rating)}
-                          </div>
                           <span className="text-xs font-semibold text-gray-600">
-                            {college.rating.toFixed(1)}
+                            Rating {college.rating.toFixed(1)} / 5
                           </span>
                         </div>
 
