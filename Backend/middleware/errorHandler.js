@@ -38,7 +38,7 @@ function normalizeError(error) {
 
     if (error?.name === 'MulterError') {
         const message = error.code === 'LIMIT_FILE_SIZE'
-            ? 'Image file is too large. Maximum size is 2MB.'
+            ? 'File is too large.'
             : error.message;
         return createError(400, message);
     }

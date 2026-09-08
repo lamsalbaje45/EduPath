@@ -1,9 +1,12 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import { after, before, beforeEach, test } from 'node:test';
 
 import supertest from 'supertest';
 
 import { app } from '../../app.js';
+import { CV } from '../../models/cv.js';
 import { authHeader, createAuthenticatedUser } from '../helpers/authHelpers.js';
 import { createCollegeDoc, createOpportunityDoc } from '../helpers/fixtures.js';
 import { clearTestDb, startTestDb, stopTestDb } from '../helpers/testDb.js';
@@ -138,6 +141,46 @@ test('POST /api/applications is restricted to students, requires an active oppor
         .set(authHeader(student.token))
         .send({ opportunity: activeOpportunity._id });
     assert.equal(duplicate.status, 409);
+});
+
+test('POST /api/applications accepts an uploaded PDF CV and skips the saved CV Maker snapshot', async () => {
+    const student = await createAuthenticatedUser({ role: 'student' });
+    const employer = await createAuthenticatedUser({ role: 'employer' });
+    const opportunity = await createOpportunityDoc({ employer: employer.user._id, status: 'active' });
+
+    await CV.create({ student: student.user._id, personalDetails: { summary: 'Saved CV summary' } });
+
+    const created = await request
+        .post('/api/applications')
+        .set(authHeader(student.token))
+        .field('opportunity', String(opportunity._id))
+        .field('coverMessage', 'Please see my attached CV.')
+        .attach('cvFile', Buffer.from('%PDF-1.4 fake pdf content for testing'), {
+            filename: 'resume.pdf',
+            contentType: 'application/pdf',
+        });
+
+    assert.equal(created.status, 201);
+    assert.equal(created.body.data.manualCvFile.filename, 'resume.pdf');
+    assert.match(created.body.data.manualCvFile.url, /\/uploads\/cvs\//);
+    assert.equal(created.body.data.cvReference, undefined);
+    assert.equal(created.body.data.cvSnapshot, undefined);
+
+    await fs.rm(path.join('uploads', 'cvs', String(student.user._id)), { recursive: true, force: true });
+});
+
+test('POST /api/applications rejects a non-PDF CV upload', async () => {
+    const student = await createAuthenticatedUser({ role: 'student' });
+    const employer = await createAuthenticatedUser({ role: 'employer' });
+    const opportunity = await createOpportunityDoc({ employer: employer.user._id, status: 'active' });
+
+    const rejected = await request
+        .post('/api/applications')
+        .set(authHeader(student.token))
+        .field('opportunity', String(opportunity._id))
+        .attach('cvFile', Buffer.from('not a pdf'), { filename: 'resume.txt', contentType: 'text/plain' });
+
+    assert.equal(rejected.status, 400);
 });
 
 test('applications are visible to the applicant and the owning employer, and hidden from unrelated employers', async () => {

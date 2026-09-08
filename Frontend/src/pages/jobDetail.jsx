@@ -10,7 +10,7 @@ import {
   ErrorBanner,
   LoadingSpinner,
 } from "../components/ui";
-import { Icon, Blob, Reveal, SectionLabel } from "../components/ui/design";
+import { Icon, Blob, Reveal, SectionLabel, Pill } from "../components/ui/design";
 
 /**
  * Opportunity / Job Detail Page
@@ -25,6 +25,8 @@ import { Icon, Blob, Reveal, SectionLabel } from "../components/ui/design";
  *   - If unauthenticated -> Redirect to /login preserving return path
  * - Save / Bookmark pattern: backed by GET/POST/DELETE /students/me/saved/opportunities/:id
  */
+
+const MAX_CV_FILE_SIZE = 5 * 1024 * 1024; // 5MB, matches the backend's cvFileUpload limit
 
 const toTitleCase = (value) =>
   value ? `${value.charAt(0).toUpperCase()}${value.slice(1)}` : "";
@@ -70,6 +72,9 @@ function JobDetail() {
   const [hasCv, setHasCv] = useState(false);
   const [cvLoading, setCvLoading] = useState(false);
   const [cvError, setCvError] = useState(null);
+  const [cvMethod, setCvMethod] = useState("saved");
+  const [cvFile, setCvFile] = useState(null);
+  const [cvFileError, setCvFileError] = useState(null);
   const [applicationLoading, setApplicationLoading] = useState(false);
   const [applicationError, setApplicationError] = useState(null);
   const [applicationSuccess, setApplicationSuccess] = useState(false);
@@ -78,7 +83,7 @@ function JobDetail() {
 
   // Check saved status from the backend on mount or auth change
   useEffect(() => {
-    if (!isAuthenticated || !user?.id) {
+    if (!isAuthenticated || (!user?._id && !user?.id)) {
       setIsSaved(false);
       return;
     }
@@ -121,9 +126,12 @@ function JobDetail() {
 
     try {
       const response = await api.getCv();
-      setHasCv(Boolean(response.data));
+      const found = Boolean(response.data);
+      setHasCv(found);
+      setCvMethod(found ? "saved" : "manual");
     } catch {
       setHasCv(false);
+      setCvMethod("manual");
       setCvError("No CV found on file. You can still submit your cover message.");
     } finally {
       setCvLoading(false);
@@ -134,6 +142,34 @@ function JobDetail() {
     setShowApplicationModal(false);
     setApplicationError(null);
     setApplicationSuccess(false);
+    setCvFile(null);
+    setCvFileError(null);
+  };
+
+  const handleCvFileChange = (event) => {
+    const file = event.target.files?.[0] || null;
+    setCvFileError(null);
+
+    if (!file) {
+      setCvFile(null);
+      return;
+    }
+
+    if (file.type !== "application/pdf") {
+      setCvFileError("Please choose a PDF file.");
+      event.target.value = "";
+      setCvFile(null);
+      return;
+    }
+
+    if (file.size > MAX_CV_FILE_SIZE) {
+      setCvFileError("File is too large. Maximum size is 5MB.");
+      event.target.value = "";
+      setCvFile(null);
+      return;
+    }
+
+    setCvFile(file);
   };
 
   // Open apply flow (redirects to /login if unauthenticated)
@@ -151,7 +187,7 @@ function JobDetail() {
 
   // Bookmark / Save toggle handler
   const handleToggleSaveJob = async () => {
-    if (!isAuthenticated || !user?.id) {
+    if (!isAuthenticated || (!user?._id && !user?.id)) {
       navigate("/login", { state: { from: returnPath } });
       return;
     }
@@ -175,8 +211,14 @@ function JobDetail() {
   const handleSubmitApplication = async (event) => {
     event.preventDefault();
     setApplicationError(null);
+    setCvFileError(null);
 
     if (!opportunity) return;
+
+    if (cvMethod === "manual" && !cvFile) {
+      setCvFileError("Please attach a PDF CV, or switch to your saved CV.");
+      return;
+    }
 
     setApplicationLoading(true);
 
@@ -184,9 +226,11 @@ function JobDetail() {
       await api.createApplication({
         opportunity: opportunity._id,
         coverMessage: coverMessage.trim(),
+        cvFile: cvMethod === "manual" ? cvFile : undefined,
       });
       setApplicationSuccess(true);
       setCoverMessage("");
+      setCvFile(null);
     } catch (err) {
       console.error("Failed to submit application:", err);
       setApplicationError(
@@ -416,7 +460,7 @@ function JobDetail() {
               </p>
             ) : canApplyInternally ? (
               <p className="text-sm leading-relaxed text-gray-700">
-                You can apply directly through EduPath. Click <strong>Apply now</strong> to submit a cover message and attach your CV from CV Maker.
+                You can apply directly through EduPath. Click <strong>Apply now</strong> to submit a cover message, then either attach your CV from CV Maker or upload a PDF.
               </p>
             ) : (
               <p className="text-sm leading-relaxed text-gray-700">
@@ -496,18 +540,54 @@ function JobDetail() {
                 <p className="mb-2 block text-sm font-medium text-gray-900">
                   CV Attachment
                 </p>
-                {cvLoading ? (
-                  <div className="rounded-xl border border-gray-200 p-3">
-                    <LoadingSpinner size="sm" message="Checking your CV..." />
-                  </div>
-                ) : hasCv ? (
-                  <p className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800">
-                    Your CV from CV Maker will be attached automatically.
-                  </p>
+
+                <div className="mb-3 flex flex-wrap gap-2">
+                  <Pill active={cvMethod === "saved"} onClick={() => setCvMethod("saved")}>
+                    Use CV from CV Maker
+                  </Pill>
+                  <Pill active={cvMethod === "manual"} onClick={() => setCvMethod("manual")}>
+                    Upload CV (PDF)
+                  </Pill>
+                </div>
+
+                {cvMethod === "saved" ? (
+                  cvLoading ? (
+                    <div className="rounded-xl border border-gray-200 p-3">
+                      <LoadingSpinner size="sm" message="Checking your CV..." />
+                    </div>
+                  ) : hasCv ? (
+                    <p className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800">
+                      Your CV from CV Maker will be attached automatically.
+                    </p>
+                  ) : (
+                    <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+                      {cvError || "No CV found. Upload a PDF below, or build one in CV Maker first."}
+                    </p>
+                  )
                 ) : (
-                  <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
-                    {cvError || "No CV found. You can still submit your cover message, or build one in CV Maker first."}
-                  </p>
+                  <div>
+                    <label
+                      htmlFor="cv-file"
+                      className={`flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-dashed px-4 py-3 text-sm transition-colors ${
+                        cvFileError ? "border-red-500" : "border-gray-300 hover:border-[#1F4FD8]"
+                      }`}
+                    >
+                      <span className={cvFile ? "font-medium text-gray-900" : "text-gray-500"}>
+                        {cvFile ? cvFile.name : "Choose a PDF file (max 5MB)"}
+                      </span>
+                      <span className="shrink-0 rounded-full bg-[#E7EEFF] px-3 py-1.5 text-xs font-black text-[#2551D9]">
+                        {cvFile ? "Change" : "Browse"}
+                      </span>
+                    </label>
+                    <input
+                      id="cv-file"
+                      type="file"
+                      accept="application/pdf"
+                      onChange={handleCvFileChange}
+                      className="hidden"
+                    />
+                    {cvFileError && <span className="mt-1 block text-xs text-red-500">{cvFileError}</span>}
+                  </div>
                 )}
               </div>
 

@@ -19,4 +19,23 @@ const profileImageUpload = multer({
     fileFilter: imageFileFilter,
 }).single('profileImage');
 
-export { profileImageUpload };
+const ALLOWED_CV_MIME_TYPES = ['application/pdf'];
+const MAX_CV_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
+function cvFileFilter(req, file, cb) {
+    if (!ALLOWED_CV_MIME_TYPES.includes(file.mimetype)) {
+        const error = new Error('Only PDF files are allowed for CV uploads.');
+        error.status = 400;
+        return cb(error);
+    }
+
+    return cb(null, true);
+}
+
+const cvFileUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: MAX_CV_FILE_SIZE },
+    fileFilter: cvFileFilter,
+}).single('cvFile');
+
+export { profileImageUpload, cvFileUpload };

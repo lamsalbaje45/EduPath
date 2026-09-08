@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import * as api from "../api/endpoints";
+import { getAssetUrl } from "../api/client";
 import {
   Badge,
   Button,
@@ -615,6 +616,18 @@ function EmployerDashboard() {
                               </span>
                               <p className="italic leading-relaxed">"{app.coverMessage}"</p>
                             </div>
+                          )}
+
+                          {/* Uploaded PDF CV */}
+                          {app.manualCvFile?.url && (
+                            <a
+                              href={getAssetUrl(app.manualCvFile.url)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 text-xs font-black text-[#5472FC] hover:underline"
+                            >
+                              📄 {app.manualCvFile.filename || "View Candidate CV (PDF)"}
+                            </a>
                           )}
 
                           {/* CV Snapshot Accordion */}

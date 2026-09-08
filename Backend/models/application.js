@@ -23,6 +23,11 @@ const applicationSchema = new Schema(
         cvSnapshot: {
             type: Schema.Types.Mixed,
         },
+        manualCvFile: {
+            url: { type: String },
+            filename: { type: String },
+            size: { type: Number },
+        },
         coverMessage: {
             type: String,
             trim: true,

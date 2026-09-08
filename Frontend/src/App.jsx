@@ -31,6 +31,7 @@ import InstructorDashboard from "./pages/instructorDashboard";
 import { PlaceholderPage } from "./pages/placeholder";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import ScrollToTop from "./components/ScrollToTop";
 
 function AppRoutes() {
   const { pathname } = useLocation();
@@ -38,6 +39,7 @@ function AppRoutes() {
 
   return (
     <>
+      <ScrollToTop />
       {!hideChrome && <Navbar />}
       <Routes>
         {/* Public routes */}

@@ -3,6 +3,7 @@ import { CV } from '../models/cv.js';
 import { Opportunity } from '../models/opportunity.js';
 import { isAdmin } from '../middleware/authorization.js';
 import { buildPagination, buildPaginationMetadata } from '../services/queryBuilders.js';
+import { uploadCV } from '../services/fileUploadService.js';
 
 import { asyncHandler, sendCreated, sendError, sendPaginated, sendSuccess } from './controllerUtils.js';
 
@@ -25,14 +26,27 @@ const createApplication = asyncHandler(async (req, res) => {
         return sendError(res, { status: 409, message: 'You have already applied to this opportunity.' });
     }
 
-    const cv = await CV.findOne({ student: req.user.id }).lean();
+    // An uploaded CV file replaces the auto-attached CV Maker snapshot for
+    // this application, so the two never both show up for the employer.
+    let cvReference;
+    let cvSnapshot;
+    let manualCvFile;
+    if (req.file) {
+        const uploaded = await uploadCV(req.file, String(req.user.id));
+        manualCvFile = { url: uploaded.url, filename: req.file.originalname, size: req.file.size };
+    } else {
+        const cv = await CV.findOne({ student: req.user.id }).lean();
+        cvReference = cv?._id;
+        cvSnapshot = cv || undefined;
+    }
 
     const application = await Application.create({
         student: req.user.id,
         opportunity: opportunityId,
         coverMessage,
-        cvReference: cv?._id,
-        cvSnapshot: cv || undefined,
+        cvReference,
+        cvSnapshot,
+        manualCvFile,
     });
 
     return sendCreated(res, { message: 'Application submitted successfully.', data: application });

@@ -178,7 +178,7 @@ function Profile() {
 
   // Load Saved Colleges, Opportunities, Classes and Applications
   const loadTabContent = useCallback(async () => {
-    if (!user?.id) return;
+    if (!user?._id && !user?.id) return;
     setLoadingItems(true);
 
     try {

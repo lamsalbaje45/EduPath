@@ -139,13 +139,21 @@ export const getReceivedApplications = (params = {}) =>
   apiClient.get(`/applications/received${toQueryString(params)}`)
 
 export const createApplication = (opportunityOrPayload, legacyCoverMessage) => {
-  const payload = typeof opportunityOrPayload === 'string'
-    ? { opportunity: opportunityOrPayload, coverMessage: legacyCoverMessage }
-    : {
-        opportunity: opportunityOrPayload.opportunity || opportunityOrPayload.opportunityId,
-        coverMessage: opportunityOrPayload.coverMessage,
-      }
-  return apiClient.post('/applications', payload)
+  if (typeof opportunityOrPayload === 'string') {
+    return apiClient.post('/applications', { opportunity: opportunityOrPayload, coverMessage: legacyCoverMessage })
+  }
+
+  const { opportunity, opportunityId, coverMessage, cvFile } = opportunityOrPayload
+
+  if (cvFile) {
+    const formData = new FormData()
+    formData.append('opportunity', opportunity || opportunityId)
+    if (coverMessage) formData.append('coverMessage', coverMessage)
+    formData.append('cvFile', cvFile)
+    return apiClient.post('/applications', formData)
+  }
+
+  return apiClient.post('/applications', { opportunity: opportunity || opportunityId, coverMessage })
 }
 
 export const updateApplicationStatus = (id, status, employerNotes) =>
