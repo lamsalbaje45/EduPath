@@ -11,7 +11,6 @@ export default {
       },
       fontFamily: {
         sans: [
-          "Mona Sans",
           "ui-sans-serif",
           "system-ui",
           "-apple-system",

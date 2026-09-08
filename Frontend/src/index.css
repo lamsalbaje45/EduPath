@@ -13,14 +13,6 @@
  */
 @custom-variant dark (&:where(.dark, .dark *));
 
-@font-face {
-  font-family: "Mona Sans";
-  src: url("/fonts/MonaSansVF.ttf") format("truetype");
-  font-weight: 200 900;
-  font-stretch: 75% 125%;
-  font-display: swap;
-}
-
 @layer base {
   html {
     @apply font-sans;
@@ -29,7 +21,6 @@
 
 html {
   font-family:
-    "Mona Sans",
     ui-sans-serif,
     system-ui,
     -apple-system,
