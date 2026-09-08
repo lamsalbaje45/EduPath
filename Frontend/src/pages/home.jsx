@@ -309,31 +309,31 @@ function FeaturedCard({ onClick, accent = 'blue', icon, kicker, badge, title, su
     <button
       type="button"
       onClick={onClick}
-      className="group w-[280px] shrink-0 snap-start overflow-hidden rounded-2xl border border-gray-200 bg-white text-left shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl sm:w-[300px]"
+      className="group flex h-full w-[280px] shrink-0 snap-start flex-col overflow-hidden rounded-2xl bg-white text-left shadow-sm ring-1 ring-inset ring-gray-200 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl sm:w-[300px]"
     >
-      <div className={`relative flex h-28 items-center justify-center bg-gradient-to-br ${grad}`}>
+      <div className={`relative flex h-28 items-center justify-center rounded-t-2xl bg-gradient-to-br ${grad}`}>
         <span className="absolute left-3 top-3 rounded-md bg-white/95 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-slate-800">
           {kicker}
         </span>
         {badge && <span className="absolute right-3 top-3">{badge}</span>}
         <Icon name={icon} className="h-10 w-10 text-white/85 transition-transform duration-300 group-hover:scale-110" />
       </div>
-      <div className="p-4">
+      <div className="flex flex-1 flex-col p-4">
         <h3 className="min-h-[2.5rem] line-clamp-2 text-sm font-black leading-snug text-slate-950 group-hover:text-[#2551D9]">
           {title}
         </h3>
         <p className="mt-1 line-clamp-1 text-xs font-semibold text-slate-500">{subtitle}</p>
         {metaItems && metaItems.length > 0 && (
-          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-bold text-slate-500">
+          <div className="mt-3 flex flex-col gap-1 text-[11px] font-bold text-slate-500">
             {metaItems.map((m, i) => (
-              <span key={i} className="inline-flex items-center gap-1">
-                <Icon name={m.icon} className="h-3.5 w-3.5" />
-                {m.text}
+              <span key={i} className="flex min-w-0 items-center gap-1">
+                <Icon name={m.icon} className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">{m.text}</span>
               </span>
             ))}
           </div>
         )}
-        <div className="mt-4 flex items-center gap-1 border-t border-gray-100 pt-3 text-xs font-black text-[#5472FC] transition-transform duration-300 group-hover:translate-x-1">
+        <div className="mt-auto flex items-center gap-1 border-t border-gray-100 pt-3 text-xs font-black text-[#5472FC] transition-transform duration-300 group-hover:translate-x-1">
           {footer || 'View details'} <span aria-hidden="true">→</span>
         </div>
       </div>

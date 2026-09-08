@@ -34,11 +34,11 @@ import ProtectedRoute from "./components/ProtectedRoute";
 
 function AppRoutes() {
   const { pathname } = useLocation();
-  const hideNavbar = pathname === "/login" || pathname === "/register";
+  const hideChrome = pathname === "/login" || pathname === "/register";
 
   return (
     <>
-      {!hideNavbar && <Navbar />}
+      {!hideChrome && <Navbar />}
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<Home />} />
@@ -160,7 +160,7 @@ function AppRoutes() {
         {/* Catch-all 404 Route */}
         <Route path="*" element={<NotFound />} />
       </Routes>
-      <Footer />
+      {!hideChrome && <Footer />}
     </>
   );
 }

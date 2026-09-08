@@ -1,18 +1,19 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { Blob, Reveal, SectionLabel } from '../components/ui/design'
 
 const inputBase =
-  'w-full px-4 py-3 border rounded-xl text-sm font-sans bg-white/90 dark:bg-slate-900/90 dark:text-white transition-all focus:outline-none focus:ring-0'
+  'w-full px-4 py-3 border rounded-xl text-sm font-sans bg-white transition-all focus:outline-none focus:ring-0'
 
 const inputState = (error) =>
   error
-    ? 'border-red-500 shadow-red-100 dark:shadow-red-900'
-    : 'border-gray-200 dark:border-slate-700 focus:border-[#1F4FD8] focus:shadow-[0_0_0_3px_rgba(31,79,216,0.12)] dark:focus:shadow-[0_0_0_3px_rgba(111,146,255,0.18)]'
+    ? 'border-red-500 shadow-red-100'
+    : 'border-gray-200 focus:border-[#2551D9] focus:shadow-[0_0_0_3px_rgba(37,81,217,0.12)]'
 
-const fieldLabel = 'text-sm font-medium text-gray-900 dark:text-white'
+const fieldLabel = 'text-sm font-bold text-slate-950'
 const errorText = 'text-red-500 text-xs'
-const hintText = 'text-gray-500 text-xs dark:text-gray-400'
+const hintText = 'text-slate-500 text-xs'
 
 function PasswordVisibilityIcon({ visible }) {
   return visible ? (
@@ -37,6 +38,11 @@ const PASSWORD_REQUIREMENTS = [
 
 const getPasswordErrors = (password) =>
   PASSWORD_REQUIREMENTS.filter((rule) => !rule.test(password)).map((rule) => rule.message)
+
+const highlights = [
+  { label: 'Explore', text: 'Match your interests with colleges, majors, and programs.' },
+  { label: 'Plan', text: 'Track goals, applications, and next steps in one place.' },
+]
 
 function Register() {
   const navigate = useNavigate()
@@ -161,58 +167,70 @@ function Register() {
   }
 
   return (
-    <div className="min-h-screen px-4 py-4 sm:px-6 sm:py-6 lg:px-8 bg-white dark:bg-slate-950">
-      <div className="mx-auto grid min-h-[calc(100vh-2rem)] max-w-6xl overflow-hidden rounded-[2rem] border border-gray-200/80 bg-white/70 shadow-2xl shadow-[#1F4FD8]/10 backdrop-blur sm:min-h-[calc(100vh-3rem)] lg:grid-cols-[0.9fr,1.1fr] dark:border-slate-700 dark:bg-slate-950/80">
-        <section className="flex min-h-full flex-col justify-between gap-8 bg-gradient-to-br from-[#EDF3FF] via-white to-[#DCE7FF] p-6 text-left sm:p-8 lg:p-12 dark:from-slate-900 dark:via-slate-950 dark:to-[#10245F]">
-          <div>
-            <p className="text-sm uppercase tracking-[0.35em] text-[#1F4FD8] dark:text-[#6F92FF]">EduPath</p>
-            <h2 className="mt-4 max-w-lg text-4xl font-semibold leading-tight text-gray-950 sm:text-5xl lg:text-6xl dark:text-white">
-              Create your account and start planning with clarity.
-            </h2>
-            <p className="mt-4 max-w-md text-sm leading-7 text-gray-600 sm:text-base dark:text-gray-300">
-              Join as a student, parent, educator, or counselor and keep college discovery, career planning, and guidance in one place.
+    <div className="min-h-screen bg-white font-sans">
+      <div className="h-1.5 w-full bg-gradient-to-r from-[#5472FC] via-violet-500 to-emerald-500" />
+
+      <div className="grid min-h-[calc(100vh-6px)] lg:grid-cols-[1fr_1.15fr]">
+        {/* Left -- dark brand panel, hidden on small screens */}
+        <section className="relative hidden overflow-hidden bg-ink px-10 py-12 lg:flex lg:flex-col lg:justify-between xl:px-16 xl:py-16">
+          <Blob className="-right-16 -top-16 h-72 w-72 animate-blob bg-[#5472FC]/25" />
+          <Blob className="-bottom-24 -left-16 h-80 w-80 animate-blob animation-delay-2000 bg-violet-500/15" />
+
+          <Link to="/" className="relative inline-flex w-fit rounded-xl bg-white/95 px-3 py-2 shadow-lg">
+            <img src="/logo.png" alt="EduPath" className="h-8 w-auto" />
+          </Link>
+
+          <div className="relative">
+            <SectionLabel tone="dark">Join EduPath</SectionLabel>
+            <h1 className="max-w-lg text-4xl font-black italic leading-[1.05] text-white sm:text-5xl">
+              Plan your path with clarity.
+            </h1>
+            <p className="mt-5 max-w-md text-sm leading-7 text-white/70">
+              Join as a student, college, employer, or instructor and keep discovery, applications, and
+              guidance in one place.
             </p>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-            <div className="rounded-xl border border-[#C9D7FF] bg-white/75 p-4 dark:border-[#1F4FD8]/50 dark:bg-slate-900/75">
-              <p className="text-xs uppercase tracking-[0.24em] text-[#1F4FD8] dark:text-[#6F92FF]">Explore</p>
-              <p className="mt-2 text-lg font-semibold leading-snug text-gray-950 dark:text-white">
-                Match your interests with colleges and majors
-              </p>
-            </div>
-            <div className="rounded-xl border border-[#C9D7FF] bg-white/75 p-4 dark:border-[#1F4FD8]/50 dark:bg-slate-900/75">
-              <p className="text-xs uppercase tracking-[0.24em] text-[#1F4FD8] dark:text-[#6F92FF]">Plan</p>
-              <p className="mt-2 text-lg font-semibold leading-snug text-gray-950 dark:text-white">
-                Organize goals, decisions, and next steps
-              </p>
-            </div>
+          <div className="relative grid gap-3 sm:grid-cols-2">
+            {highlights.map((item) => (
+              <div key={item.label} className="rounded-xl bg-white/5 p-4 ring-1 ring-inset ring-white/15">
+                <p className="text-[11px] font-black uppercase tracking-wide text-[#B8CAFF]">{item.label}</p>
+                <p className="mt-2 text-sm font-semibold leading-snug text-white">{item.text}</p>
+              </div>
+            ))}
           </div>
         </section>
 
-        <section className="flex min-h-full items-center p-5 text-left sm:p-8 lg:p-12">
-          <div className="mx-auto w-full max-w-2xl">
-            <p className="text-sm uppercase tracking-[0.32em] text-[#1F4FD8] dark:text-[#6F92FF]">EduPath</p>
-            <h1 className="mt-3 mb-0 text-3xl font-semibold text-gray-950 sm:text-4xl dark:text-white">
-              Create your account
-            </h1>
-            <p className="mt-3 text-sm leading-6 text-gray-600 sm:text-base dark:text-gray-400">
-              Fill in your details to start your college and career discovery journey.
-            </p>
+        {/* Right -- form panel */}
+        <section className="flex items-center justify-center px-5 py-10 sm:px-10 lg:px-16">
+          <Reveal className="w-full max-w-md">
+            <Link to="/" className="mb-8 inline-flex lg:hidden">
+              <img src="/logo.png" alt="EduPath" className="h-9 w-auto" />
+            </Link>
+
+            <div className="mb-8 flex gap-6 border-b border-gray-200">
+              <span className="border-b-2 border-[#5472FC] pb-3 text-sm font-black text-[#2551D9]">Register</span>
+              <Link to="/login" className="pb-3 text-sm font-black text-slate-400 transition-colors hover:text-slate-600">
+                Sign in
+              </Link>
+            </div>
+
+            <h2 className="text-2xl font-black text-slate-950 sm:text-3xl">Create your account</h2>
+            <p className="mt-2 text-sm text-slate-500">Fill in your details to start your college and career journey.</p>
 
             {successMessage && (
-              <div className="mt-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300">
+              <div className="mt-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-bold text-green-700">
                 {successMessage}
               </div>
             )}
             {errors.submit && (
-              <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300">
+              <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">
                 {errors.submit}
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="mt-8 grid gap-4 md:grid-cols-2">
-              <div className="flex flex-col gap-2 md:col-span-2">
+            <form onSubmit={handleSubmit} className="mt-6 grid gap-4">
+              <div className="flex flex-col gap-2">
                 <label htmlFor="fullName" className={fieldLabel}>Full Name</label>
                 <input
                   type="text"
@@ -256,81 +274,79 @@ function Register() {
                 </select>
               </div>
 
-              <div className="flex flex-col gap-2">
-                <label htmlFor="password" className={fieldLabel}>Password</label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    id="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    placeholder="At least 8 characters"
-                    className={`${inputBase} ${inputState(errors.password)} pr-11`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((prev) => !prev)}
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 transition-colors hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
-                  >
-                    <PasswordVisibilityIcon visible={showPassword} />
-                  </button>
-                </div>
-                {errors.password ? (
-                  Array.isArray(errors.password) ? (
-                    <ul className={`${errorText} list-disc space-y-0.5 pl-4`}>
-                      {errors.password.map((msg) => (
-                        <li key={msg}>{msg}</li>
-                      ))}
-                    </ul>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="flex flex-col gap-2">
+                  <label htmlFor="password" className={fieldLabel}>Password</label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      id="password"
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      placeholder="At least 8 characters"
+                      className={`${inputBase} ${inputState(errors.password)} pr-11`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 transition-colors hover:text-gray-600"
+                    >
+                      <PasswordVisibilityIcon visible={showPassword} />
+                    </button>
+                  </div>
+                  {errors.password ? (
+                    Array.isArray(errors.password) ? (
+                      <ul className={`${errorText} list-disc space-y-0.5 pl-4`}>
+                        {errors.password.map((msg) => (
+                          <li key={msg}>{msg}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <span className={errorText}>{errors.password}</span>
+                    )
                   ) : (
-                    <span className={errorText}>{errors.password}</span>
-                  )
-                ) : (
-                  <span className={hintText}>
-                    Must include uppercase, lowercase, a digit, and a special character (!@#$%^&*)
-                  </span>
-                )}
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label htmlFor="confirmPassword" className={fieldLabel}>Confirm Password</label>
-                <div className="relative">
-                  <input
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    placeholder="Re-enter your password"
-                    className={`${inputBase} ${inputState(errors.confirmPassword)} pr-11`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword((prev) => !prev)}
-                    aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 transition-colors hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
-                  >
-                    <PasswordVisibilityIcon visible={showConfirmPassword} />
-                  </button>
+                    <span className={hintText}>Uppercase, lowercase, a digit, and a symbol</span>
+                  )}
                 </div>
-                {errors.confirmPassword && (
-                  <span className={errorText}>{errors.confirmPassword}</span>
-                )}
+
+                <div className="flex flex-col gap-2">
+                  <label htmlFor="confirmPassword" className={fieldLabel}>Confirm Password</label>
+                  <div className="relative">
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      id="confirmPassword"
+                      name="confirmPassword"
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      placeholder="Re-enter your password"
+                      className={`${inputBase} ${inputState(errors.confirmPassword)} pr-11`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword((prev) => !prev)}
+                      aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 transition-colors hover:text-gray-600"
+                    >
+                      <PasswordVisibilityIcon visible={showConfirmPassword} />
+                    </button>
+                  </div>
+                  {errors.confirmPassword && <span className={errorText}>{errors.confirmPassword}</span>}
+                </div>
               </div>
 
-              <div className="flex items-start gap-3 md:col-span-2">
+              <div className="flex items-start gap-3">
                 <input
                   type="checkbox"
                   id="agreeToTerms"
                   name="agreeToTerms"
                   checked={formData.agreeToTerms}
                   onChange={handleChange}
-                  className="mt-0.5 h-5 w-5 min-w-5 cursor-pointer accent-[#1F4FD8]"
+                  className="mt-0.5 h-5 w-5 min-w-5 cursor-pointer accent-[#5472FC]"
                 />
                 <div className="flex flex-1 flex-col gap-1">
-                  <label htmlFor="agreeToTerms" className="cursor-pointer text-sm font-normal leading-6 text-gray-600 dark:text-gray-400">
+                  <label htmlFor="agreeToTerms" className="cursor-pointer text-sm font-medium leading-6 text-slate-600">
                     I agree to the Terms of Service and Privacy Policy
                   </label>
                   {errors.agreeToTerms && <span className={errorText}>{errors.agreeToTerms}</span>}
@@ -340,21 +356,12 @@ function Register() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="mt-3 w-full cursor-pointer rounded-xl bg-[#5472FC] px-6 py-3 text-base font-semibold text-white transition-all hover:bg-[#435DDE] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#5472FC] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70 md:col-span-2 dark:bg-[#5472FC] dark:hover:bg-[#435DDE] dark:focus:ring-offset-slate-950"
+                className="mt-2 w-full cursor-pointer rounded-full bg-[#5472FC] px-6 py-3.5 text-sm font-black text-white shadow-sm shadow-[#5472FC]/30 transition-all hover:-translate-y-0.5 hover:bg-[#435DDE] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#5472FC] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
               >
                 {isLoading ? 'Creating Account...' : 'Create Account'}
               </button>
             </form>
-
-            <div className="mt-6 border-t border-gray-200 pt-5 text-center dark:border-slate-700">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Already have an account?{' '}
-                <Link to="/login" className="font-semibold text-[#1F4FD8] transition-colors hover:text-[#183FB0] hover:underline dark:text-[#6F92FF] dark:hover:text-[#9DB4FF]">
-                  Sign in here
-                </Link>
-              </p>
-            </div>
-          </div>
+          </Reveal>
         </section>
       </div>
     </div>
