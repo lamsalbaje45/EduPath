@@ -120,8 +120,8 @@ const validatePasswordResetConfirmBody = createValidatorChain([
 
 const validateUserSelfUpdateBody = createValidatorChain([
     body('fullName').optional().trim().isLength({ min: 2, max: 100 }).withMessage('Full name must be between 2 and 100 characters.'),
-    body('phoneNumber').optional().trim().isLength({ min: 5, max: 20 }).withMessage('Phone number is invalid.'),
-    body('profileImage').optional().trim().isLength({ min: 1, max: 500 }).withMessage('Profile image is invalid.'),
+    body('phoneNumber').optional({ checkFalsy: true }).trim().isLength({ min: 5, max: 20 }).withMessage('Phone number is invalid.'),
+    body('profileImage').optional({ checkFalsy: true }).trim().isLength({ min: 1, max: 500 }).withMessage('Profile image is invalid.'),
 ]);
 
 const validateUserStatusBody = createValidatorChain([

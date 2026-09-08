@@ -149,7 +149,13 @@ export const AuthProvider = ({ children }) => {
   }
 
   const updateUser = (updates) => {
-    setUser((prev) => (prev ? normalizeUser({ ...prev, ...updates }) : prev))
+    setUser((prev) => {
+      if (!prev) return prev
+      // Drop previously-derived name fields so normalizeUser recomputes
+      // them from a fresh `fullName` instead of keeping stale values.
+      const { firstName, lastName, accountType, ...rest } = prev // eslint-disable-line no-unused-vars
+      return normalizeUser({ ...rest, ...updates })
+    })
   }
 
   const isAuthenticated = !!token && !!user

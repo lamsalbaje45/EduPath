@@ -88,6 +88,160 @@ const DEFAULT_CV = {
   publicShareStatus: false,
 };
 
+// Start/End Date fields are stored as strict "YYYY-MM" values (native <input type="month">).
+// Format them as "Mon YYYY" for display, treating a blank end date as ongoing.
+function formatMonthYear(value) {
+  if (!value) return "";
+  const [year, month] = value.split("-");
+  if (!year || !month) return value;
+
+  const date = new Date(Number(year), Number(month) - 1, 1);
+  if (Number.isNaN(date.getTime())) return value;
+
+  return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+}
+
+function formatDateRange(startDate, endDate) {
+  if (!startDate && !endDate) return "";
+  return `${formatMonthYear(startDate) || "?"} - ${endDate ? formatMonthYear(endDate) : "Present"}`;
+}
+
+// The backend stores startDate/endDate as real Date values, which arrive over the API as
+// full ISO datetime strings. <input type="month"> only accepts a strict "YYYY-MM" value,
+// so normalize on load or the picker silently renders blank despite having saved data.
+function toMonthInputValue(value) {
+  if (!value) return "";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  return `${year}-${month}`;
+}
+
+function normalizeDateEntries(entries) {
+  return entries.map((entry) => ({
+    ...entry,
+    startDate: toMonthInputValue(entry.startDate),
+    endDate: toMonthInputValue(entry.endDate),
+  }));
+}
+
+// "YYYY-MM" values are lexicographically sortable, so plain string comparison is
+// chronologically correct as long as both dates are fully selected.
+function getDateRangeError(startDate, endDate) {
+  if (!startDate || !endDate) return null;
+  return startDate < endDate ? null : "End date must be after start date.";
+}
+
+const MONTH_OPTIONS = [
+  { value: "01", label: "January" },
+  { value: "02", label: "February" },
+  { value: "03", label: "March" },
+  { value: "04", label: "April" },
+  { value: "05", label: "May" },
+  { value: "06", label: "June" },
+  { value: "07", label: "July" },
+  { value: "08", label: "August" },
+  { value: "09", label: "September" },
+  { value: "10", label: "October" },
+  { value: "11", label: "November" },
+  { value: "12", label: "December" },
+];
+
+// Covers a typical resume's range: decades of past education/experience through a
+// few years out for an expected graduation or start date.
+const YEAR_OPTIONS = (() => {
+  const currentYear = new Date().getFullYear();
+  const years = [];
+  for (let year = currentYear + 5; year >= currentYear - 60; year -= 1) {
+    years.push(String(year));
+  }
+  return years;
+})();
+
+const monthYearSelectClasses = (hasError) =>
+  `w-full px-3 py-3 border rounded-xl text-sm font-sans bg-white/90 dark:bg-slate-900/90 dark:text-white transition-all focus:outline-none focus:ring-0 ${
+    hasError
+      ? "border-red-500 shadow-red-100 dark:shadow-red-900"
+      : "border-gray-200 dark:border-slate-700 focus:border-[#1F4FD8] focus:shadow-[0_0_0_3px_rgba(31,79,216,0.12)]"
+  }`;
+
+// Renders Month/Year as two dropdowns but exposes the same "YYYY-MM" string contract as
+// the rest of the form. Keeps its own month/year selection in local state so picking one
+// dropdown before the other doesn't get wiped out while the value is still incomplete
+// (the parent only receives a value once both parts are chosen).
+function MonthYearSelect({ label, value, onChange, error, helperText }) {
+  const [year, initialMonth] = value ? value.split("-") : ["", ""];
+  const [month, setMonth] = useState(initialMonth || "");
+  const [selectedYear, setSelectedYear] = useState(year || "");
+  const lastEmitted = useRef(value || "");
+
+  useEffect(() => {
+    if (value !== lastEmitted.current) {
+      const [nextYear, nextMonth] = value ? value.split("-") : ["", ""];
+      setSelectedYear(nextYear || "");
+      setMonth(nextMonth || "");
+      lastEmitted.current = value || "";
+    }
+  }, [value]);
+
+  const emit = (nextMonth, nextYear) => {
+    const next = nextMonth && nextYear ? `${nextYear}-${nextMonth}` : "";
+    lastEmitted.current = next;
+    onChange(next);
+  };
+
+  return (
+    <div className="w-full">
+      {label && (
+        <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+          {label}
+        </label>
+      )}
+      <div className="grid grid-cols-2 gap-2">
+        <select
+          aria-label={label ? `${label} month` : "Month"}
+          className={monthYearSelectClasses(error)}
+          value={month}
+          onChange={(e) => {
+            setMonth(e.target.value);
+            emit(e.target.value, selectedYear);
+          }}
+        >
+          <option value="">Month</option>
+          {MONTH_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <select
+          aria-label={label ? `${label} year` : "Year"}
+          className={monthYearSelectClasses(error)}
+          value={selectedYear}
+          onChange={(e) => {
+            setSelectedYear(e.target.value);
+            emit(month, e.target.value);
+          }}
+        >
+          <option value="">Year</option>
+          {YEAR_OPTIONS.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      </div>
+      {error && <span className="mt-1 block text-xs text-red-500">{error}</span>}
+      {helperText && !error && (
+        <span className="mt-1 block text-xs text-gray-500">{helperText}</span>
+      )}
+    </div>
+  );
+}
+
 function CvMaker() {
   const { user } = useAuth();
 
@@ -134,11 +288,11 @@ function CvMaker() {
             summary: fetched.personalDetails?.summary || "",
           },
           educationEntries: fetched.educationEntries?.length
-            ? fetched.educationEntries
+            ? normalizeDateEntries(fetched.educationEntries)
             : DEFAULT_CV.educationEntries,
           skillList: fetched.skillList || [],
           experienceEntries: fetched.experienceEntries?.length
-            ? fetched.experienceEntries
+            ? normalizeDateEntries(fetched.experienceEntries)
             : DEFAULT_CV.experienceEntries,
           projectEntries: fetched.projectEntries?.length
             ? fetched.projectEntries
@@ -306,6 +460,9 @@ function CvMaker() {
           }
           #cv-preview-document, #cv-preview-document * {
             visibility: visible !important;
+          }
+          #cv-preview-pane {
+            display: block !important;
           }
           #cv-preview-document {
             position: absolute !important;
@@ -635,29 +792,29 @@ function CvMaker() {
                       </div>
 
                       <div className="grid gap-3 sm:grid-cols-3">
-                        <Input
+                        <MonthYearSelect
                           label="Start Date"
-                          placeholder="e.g. 2021"
                           value={edu.startDate}
-                          onChange={(e) =>
+                          onChange={(nextValue) =>
                             updateArrayEntry(
                               "educationEntries",
                               idx,
                               "startDate",
-                              e.target.value,
+                              nextValue,
                             )
                           }
                         />
-                        <Input
+                        <MonthYearSelect
                           label="End Date"
-                          placeholder="e.g. 2025"
+                          helperText="Leave blank if ongoing"
+                          error={getDateRangeError(edu.startDate, edu.endDate)}
                           value={edu.endDate}
-                          onChange={(e) =>
+                          onChange={(nextValue) =>
                             updateArrayEntry(
                               "educationEntries",
                               idx,
                               "endDate",
-                              e.target.value,
+                              nextValue,
                             )
                           }
                         />
@@ -756,29 +913,29 @@ function CvMaker() {
                       />
 
                       <div className="grid gap-3 sm:grid-cols-2">
-                        <Input
+                        <MonthYearSelect
                           label="Start Date"
-                          placeholder="e.g. June 2023"
                           value={exp.startDate}
-                          onChange={(e) =>
+                          onChange={(nextValue) =>
                             updateArrayEntry(
                               "experienceEntries",
                               idx,
                               "startDate",
-                              e.target.value,
+                              nextValue,
                             )
                           }
                         />
-                        <Input
+                        <MonthYearSelect
                           label="End Date"
-                          placeholder="e.g. Present"
+                          helperText="Leave blank if you currently work here"
+                          error={getDateRangeError(exp.startDate, exp.endDate)}
                           value={exp.endDate}
-                          onChange={(e) =>
+                          onChange={(nextValue) =>
                             updateArrayEntry(
                               "experienceEntries",
                               idx,
                               "endDate",
-                              e.target.value,
+                              nextValue,
                             )
                           }
                         />
@@ -1138,6 +1295,7 @@ function CvMaker() {
 
           {/* Live Preview Pane (Right 7 cols) */}
           <div
+            id="cv-preview-pane"
             className={`lg:col-span-6 xl:col-span-7 ${
               mobileView === "form" ? "hidden lg:block" : "block"
             }`}
@@ -1229,7 +1387,7 @@ function CvMaker() {
                                 <div className="flex justify-between text-xs font-bold text-slate-900">
                                   <span>{exp.title || "Position Title"}</span>
                                   <span className="text-gray-500">
-                                    {exp.startDate} - {exp.endDate}
+                                    {formatDateRange(exp.startDate, exp.endDate)}
                                   </span>
                                 </div>
                                 <p className="text-xs font-semibold text-gray-600">
@@ -1258,7 +1416,7 @@ function CvMaker() {
                                     {edu.degree} {edu.fieldOfStudy && `in ${edu.fieldOfStudy}`}
                                   </span>
                                   <span className="text-gray-500">
-                                    {edu.startDate} - {edu.endDate}
+                                    {formatDateRange(edu.startDate, edu.endDate)}
                                   </span>
                                 </div>
                                 <p className="text-xs text-gray-600">
@@ -1338,7 +1496,7 @@ function CvMaker() {
                               <div className="flex justify-between text-xs font-bold text-slate-900">
                                 <span>{exp.title || "Job Title"}</span>
                                 <span>
-                                  {exp.startDate} - {exp.endDate}
+                                  {formatDateRange(exp.startDate, exp.endDate)}
                                 </span>
                               </div>
                               <p className="text-xs font-medium text-gray-600 italic">
@@ -1371,7 +1529,7 @@ function CvMaker() {
                                 </p>
                               </div>
                               <span className="text-gray-500 font-medium">
-                                {edu.startDate} - {edu.endDate}
+                                {formatDateRange(edu.startDate, edu.endDate)}
                               </span>
                             </div>
                           ))}
@@ -1439,7 +1597,7 @@ function CvMaker() {
                                 {exp.title} <span className="font-normal text-gray-500">@ {exp.organization}</span>
                               </span>
                               <span className="text-gray-400">
-                                {exp.startDate} - {exp.endDate}
+                                {formatDateRange(exp.startDate, exp.endDate)}
                               </span>
                             </div>
                             <p className="text-xs text-gray-600">
@@ -1467,7 +1625,7 @@ function CvMaker() {
                               </p>
                             </div>
                             <span className="text-gray-400 font-medium">
-                              {edu.startDate} - {edu.endDate}
+                              {formatDateRange(edu.startDate, edu.endDate)}
                             </span>
                           </div>
                         ))}

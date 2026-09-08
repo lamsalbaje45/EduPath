@@ -219,7 +219,7 @@ function Navbar() {
                         onClick={() => setDropdownOpen(false)}
                         className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-purple-700 hover:bg-purple-50"
                       >
-                        🛡️ Admin Dashboard
+                        Admin Dashboard
                       </Link>
                     )}
                     {isEmployer && (
@@ -228,7 +228,7 @@ function Navbar() {
                         onClick={() => setDropdownOpen(false)}
                         className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-emerald-700 hover:bg-emerald-50"
                       >
-                        💼 Employer Dashboard
+                        Employer Dashboard
                       </Link>
                     )}
                     {isCollegeAdmin && (
@@ -237,7 +237,7 @@ function Navbar() {
                         onClick={() => setDropdownOpen(false)}
                         className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-amber-700 hover:bg-amber-50"
                       >
-                        🏫 College Admin Dashboard
+                        College Admin Dashboard
                       </Link>
                     )}
                     {isInstructor && (
@@ -246,7 +246,7 @@ function Navbar() {
                         onClick={() => setDropdownOpen(false)}
                         className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-pink-700 hover:bg-pink-50"
                       >
-                        🎓 Instructor Dashboard
+                        Instructor Dashboard
                       </Link>
                     )}
 
@@ -255,21 +255,21 @@ function Navbar() {
                       onClick={() => setDropdownOpen(false)}
                       className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 hover:bg-[#F6F8FF] hover:text-[#2551D9]"
                     >
-                      👤 My Profile
+                      My Profile
                     </Link>
                     <Link
                       to="/applications"
                       onClick={() => setDropdownOpen(false)}
                       className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 hover:bg-[#F6F8FF] hover:text-[#2551D9]"
                     >
-                      📄 My Applications
+                      My Applications
                     </Link>
                     <Link
                       to="/cv-maker"
                       onClick={() => setDropdownOpen(false)}
                       className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 hover:bg-[#F6F8FF] hover:text-[#2551D9]"
                     >
-                      📝 CV Maker
+                      CV Maker
                     </Link>
                   </div>
 
@@ -279,7 +279,7 @@ function Navbar() {
                       onClick={handleLogout}
                       className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50"
                     >
-                      ➔ Sign out
+                      Sign out
                     </button>
                   </div>
                 </div>

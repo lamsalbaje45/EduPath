@@ -59,7 +59,7 @@ function hasOverlap(arr1, arr2) {
  * @param {Object} college - College object
  * @returns {Object} Score and matching details
  */
-function calculateCollegeMatchScore(student, college) {
+export function calculateCollegeMatchScore(student, college) {
     let score = 0;
     const matches = {
         courses: 0,
@@ -118,7 +118,7 @@ function calculateCollegeMatchScore(student, college) {
  * @param {Object} opportunity - Opportunity object
  * @returns {Object} Score and matching details
  */
-function calculateOpportunityMatchScore(student, opportunity) {
+export function calculateOpportunityMatchScore(student, opportunity) {
     let score = 0;
     const matches = {
         skills: 0,
@@ -203,7 +203,7 @@ function calculateOpportunityMatchScore(student, opportunity) {
  * @param {Object} onlineClass - Online class object
  * @returns {Object} Score and matching details
  */
-function calculateClassMatchScore(student, onlineClass) {
+export function calculateClassMatchScore(student, onlineClass) {
     let score = 0;
     const matches = {
         skills: 0,

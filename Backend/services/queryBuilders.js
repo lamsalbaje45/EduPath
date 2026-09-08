@@ -359,6 +359,9 @@ function buildUserQuery(query = {}, { forceRole } = {}) {
 }
 
 export {
+    DEFAULT_PAGE,
+    DEFAULT_LIMIT,
+    MAX_LIMIT,
     buildClassQuery,
     buildCollegeQuery,
     buildOpportunityQuery,
@@ -366,4 +369,7 @@ export {
     buildPaginationMetadata,
     buildSort,
     buildUserQuery,
+    toBoolean,
+    toNumber,
+    toTextArray,
 };
