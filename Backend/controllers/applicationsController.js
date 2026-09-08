@@ -33,7 +33,7 @@ const createApplication = asyncHandler(async (req, res) => {
     let manualCvFile;
     if (req.file) {
         const uploaded = await uploadCV(req.file, String(req.user.id));
-        manualCvFile = { url: uploaded.url, filename: req.file.originalname, size: req.file.size };
+        manualCvFile = { url: uploaded.url, filename: req.file.originalname, size: req.file.size, publicId: uploaded.publicId };
     } else {
         const cv = await CV.findOne({ student: req.user.id }).lean();
         cvReference = cv?._id;

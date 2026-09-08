@@ -27,6 +27,7 @@ const applicationSchema = new Schema(
             url: { type: String },
             filename: { type: String },
             size: { type: Number },
+            publicId: { type: String },
         },
         coverMessage: {
             type: String,

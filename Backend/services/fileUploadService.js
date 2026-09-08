@@ -7,6 +7,8 @@ import fs from 'fs/promises';
 import path from 'path';
 import crypto from 'crypto';
 
+import { cloudinary } from '../config/cloudinary.js';
+
 const UPLOAD_DIR = process.env.UPLOAD_DIR || './uploads';
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB default
 const ALLOWED_MIME_TYPES = {
@@ -80,10 +82,28 @@ export function generateUniqueFilename(originalFilename) {
 }
 
 /**
- * Upload CV file
+ * Stream a buffer straight to Cloudinary (no local disk write -- hosts like
+ * Render/Vercel have ephemeral filesystems, so anything written to disk is
+ * lost on the next restart or cold start).
+ * @param {Buffer} buffer - File contents
+ * @param {Object} options - Cloudinary upload options
+ * @returns {Promise<Object>} Cloudinary upload result
+ */
+function uploadBufferToCloudinary(buffer, options) {
+    return new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(options, (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+        });
+        uploadStream.end(buffer);
+    });
+}
+
+/**
+ * Upload CV file to Cloudinary
  * @param {Object} file - File object from express/multer
  * @param {string} userId - User ID for organizing uploads
- * @returns {Promise<Object>} Upload result with file path and URL
+ * @returns {Promise<Object>} Upload result with the hosted URL
  */
 export async function uploadCV(file, userId) {
     try {
@@ -92,21 +112,20 @@ export async function uploadCV(file, userId) {
             throw new Error(validation.errors.join(', '));
         }
 
-        const filename = generateUniqueFilename(file.originalname);
-        const filepath = path.join(UPLOAD_DIR, 'cvs', userId, filename);
-        const dirpath = path.dirname(filepath);
+        // Cloudinary raw uploads are delivered at exactly `public_id`, so the
+        // filename needs its extension baked in to serve as a real .pdf.
+        const publicId = generateUniqueFilename(file.originalname);
 
-        // Create user directory if it doesn't exist
-        await fs.mkdir(dirpath, { recursive: true });
-
-        // Save file
-        await fs.writeFile(filepath, file.buffer);
+        const result = await uploadBufferToCloudinary(file.buffer, {
+            folder: `edupath/cvs/${userId}`,
+            resource_type: 'raw',
+            public_id: publicId,
+        });
 
         return {
             success: true,
-            filename,
-            filepath,
-            url: `/uploads/cvs/${userId}/${filename}`,
+            url: result.secure_url,
+            publicId: result.public_id,
             mimetype: file.mimetype,
             size: file.size,
         };
@@ -117,10 +136,10 @@ export async function uploadCV(file, userId) {
 }
 
 /**
- * Upload profile image
+ * Upload profile image to Cloudinary
  * @param {Object} file - File object from express/multer
  * @param {string} userId - User ID for organizing uploads
- * @returns {Promise<Object>} Upload result
+ * @returns {Promise<Object>} Upload result with the hosted URL
  */
 export async function uploadProfileImage(file, userId) {
     try {
@@ -129,21 +148,15 @@ export async function uploadProfileImage(file, userId) {
             throw new Error(validation.errors.join(', '));
         }
 
-        const filename = generateUniqueFilename(file.originalname);
-        const filepath = path.join(UPLOAD_DIR, 'profiles', userId, filename);
-        const dirpath = path.dirname(filepath);
-
-        // Create user directory if it doesn't exist
-        await fs.mkdir(dirpath, { recursive: true });
-
-        // Save file
-        await fs.writeFile(filepath, file.buffer);
+        const result = await uploadBufferToCloudinary(file.buffer, {
+            folder: `edupath/profiles/${userId}`,
+            resource_type: 'image',
+        });
 
         return {
             success: true,
-            filename,
-            filepath,
-            url: `/uploads/profiles/${userId}/${filename}`,
+            url: result.secure_url,
+            publicId: result.public_id,
             mimetype: file.mimetype,
             size: file.size,
         };

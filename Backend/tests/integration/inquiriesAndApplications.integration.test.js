@@ -1,15 +1,18 @@
 import assert from 'node:assert/strict';
-import fs from 'node:fs/promises';
-import path from 'node:path';
 import { after, before, beforeEach, test } from 'node:test';
 
 import supertest from 'supertest';
 
 import { app } from '../../app.js';
+import { cloudinary } from '../../config/cloudinary.js';
 import { CV } from '../../models/cv.js';
 import { authHeader, createAuthenticatedUser } from '../helpers/authHelpers.js';
 import { createCollegeDoc, createOpportunityDoc } from '../helpers/fixtures.js';
 import { clearTestDb, startTestDb, stopTestDb } from '../helpers/testDb.js';
+
+const hasCloudinaryCredentials = Boolean(
+    process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET
+);
 
 before(startTestDb);
 after(stopTestDb);
@@ -143,31 +146,35 @@ test('POST /api/applications is restricted to students, requires an active oppor
     assert.equal(duplicate.status, 409);
 });
 
-test('POST /api/applications accepts an uploaded PDF CV and skips the saved CV Maker snapshot', async () => {
-    const student = await createAuthenticatedUser({ role: 'student' });
-    const employer = await createAuthenticatedUser({ role: 'employer' });
-    const opportunity = await createOpportunityDoc({ employer: employer.user._id, status: 'active' });
+test(
+    'POST /api/applications accepts an uploaded PDF CV and skips the saved CV Maker snapshot',
+    { skip: !hasCloudinaryCredentials && 'Requires CLOUDINARY_* env vars to run against real Cloudinary' },
+    async () => {
+        const student = await createAuthenticatedUser({ role: 'student' });
+        const employer = await createAuthenticatedUser({ role: 'employer' });
+        const opportunity = await createOpportunityDoc({ employer: employer.user._id, status: 'active' });
 
-    await CV.create({ student: student.user._id, personalDetails: { summary: 'Saved CV summary' } });
+        await CV.create({ student: student.user._id, personalDetails: { summary: 'Saved CV summary' } });
 
-    const created = await request
-        .post('/api/applications')
-        .set(authHeader(student.token))
-        .field('opportunity', String(opportunity._id))
-        .field('coverMessage', 'Please see my attached CV.')
-        .attach('cvFile', Buffer.from('%PDF-1.4 fake pdf content for testing'), {
-            filename: 'resume.pdf',
-            contentType: 'application/pdf',
-        });
+        const created = await request
+            .post('/api/applications')
+            .set(authHeader(student.token))
+            .field('opportunity', String(opportunity._id))
+            .field('coverMessage', 'Please see my attached CV.')
+            .attach('cvFile', Buffer.from('%PDF-1.4 fake pdf content for testing'), {
+                filename: 'resume.pdf',
+                contentType: 'application/pdf',
+            });
 
-    assert.equal(created.status, 201);
-    assert.equal(created.body.data.manualCvFile.filename, 'resume.pdf');
-    assert.match(created.body.data.manualCvFile.url, /\/uploads\/cvs\//);
-    assert.equal(created.body.data.cvReference, undefined);
-    assert.equal(created.body.data.cvSnapshot, undefined);
+        assert.equal(created.status, 201);
+        assert.equal(created.body.data.manualCvFile.filename, 'resume.pdf');
+        assert.match(created.body.data.manualCvFile.url, /^https:\/\/res\.cloudinary\.com\//);
+        assert.equal(created.body.data.cvReference, undefined);
+        assert.equal(created.body.data.cvSnapshot, undefined);
 
-    await fs.rm(path.join('uploads', 'cvs', String(student.user._id)), { recursive: true, force: true });
-});
+        await cloudinary.uploader.destroy(created.body.data.manualCvFile.publicId, { resource_type: 'raw' });
+    }
+);
 
 test('POST /api/applications rejects a non-PDF CV upload', async () => {
     const student = await createAuthenticatedUser({ role: 'student' });
