@@ -6,6 +6,8 @@ export default {
       colors: {
         primary: "#5472FC",
         secondary: "#2551D9",
+        ink: "#0A1330",
+        mist: "#EEF2FC",
       },
       fontFamily: {
         sans: [
