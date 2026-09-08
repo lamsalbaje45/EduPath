@@ -11,6 +11,7 @@ import {
   Input,
   LoadingSpinner,
 } from "../components/ui";
+import { Icon, Blob, Reveal, SectionLabel } from "../components/ui/design";
 
 /**
  * Online Class Detail Page
@@ -197,104 +198,109 @@ function OnlineClassDetail() {
   const hasEnrollmentLink = Boolean(onlineClass.enrollmentLink);
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      {/* Hero Header */}
-      <div className="bg-white shadow-sm">
-        <div className="mx-auto max-w-5xl px-5 py-10 sm:px-8">
-          <div className="flex flex-col items-start justify-between gap-6 md:flex-row">
-            <div className="max-w-3xl">
-              <p className="mb-2 text-lg font-semibold text-gray-600">
-                {onlineClass.instructorOrOrganization}
-              </p>
-              <h1 className="text-4xl font-black text-slate-950">
-                {onlineClass.classTitle}
-              </h1>
+    <main className="bg-white">
+      {/* Hero Banner */}
+      <section className="relative flex h-56 w-full items-center justify-center overflow-hidden bg-gradient-to-br from-violet-600 to-violet-900 sm:h-64">
+        <Blob className="-right-10 -top-16 h-64 w-64 animate-blob bg-white/10" />
+        <Blob className="-bottom-20 -left-14 h-72 w-72 animate-blob animation-delay-2000 bg-white/10" />
+        <Icon name="laptop" className="h-20 w-20 text-white/20 sm:h-24 sm:w-24" />
+      </section>
 
-              {/* Badges: Level / Mode / Price / Certificate */}
-              <div className="mt-4 flex flex-wrap gap-2">
-                {onlineClass.mode && (
-                  <Badge variant="primary" size="md">
-                    {formatMode(onlineClass.mode)}
-                  </Badge>
-                )}
-                {onlineClass.level && (
-                  <Badge variant="secondary" size="md">
-                    {formatLevel(onlineClass.level)}
-                  </Badge>
-                )}
-                {isFree ? (
-                  <Badge variant="success" size="md">
-                    Free
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" size="md">
-                    {formatPrice(onlineClass.price)}
-                  </Badge>
-                )}
-                {onlineClass.certificateAvailability && (
-                  <Badge variant="warning" size="md">
-                    Certificate Provided
-                  </Badge>
-                )}
-              </div>
+      <div className="mx-auto max-w-5xl px-5 sm:px-8">
+        {/* Header Card */}
+        <Reveal className="relative z-10 -mt-16 mb-8 flex flex-col items-start justify-between gap-6 rounded-2xl border border-gray-100 bg-white p-6 shadow-xl sm:-mt-20 sm:flex-row sm:p-8">
+          <div className="max-w-3xl">
+            <SectionLabel>Online Class</SectionLabel>
+            <p className="mb-2 text-base font-semibold text-slate-500">
+              {onlineClass.instructorOrOrganization}
+            </p>
+            <h1 className="text-3xl font-black leading-tight text-slate-950 sm:text-4xl">
+              {onlineClass.classTitle}
+            </h1>
 
-              {/* Meta information */}
-              <div className="mt-5 space-y-1.5 text-sm text-gray-700">
-                {onlineClass.duration && (
-                  <p className="flex items-center gap-2">
-                    <span>Duration:</span>
-                    <span className="font-semibold text-slate-900">
-                      {onlineClass.duration}
-                    </span>
-                  </p>
-                )}
-                <p className="flex items-center gap-2">
-                  <span>Start Date:</span>
-                  <span className="font-semibold text-slate-900">
-                    {formatStartDate(onlineClass.startDate)}
-                  </span>
-                </p>
-                {onlineClass.schedule && (
-                  <p className="flex items-center gap-2">
-                    <span>Schedule:</span>
-                    <span className="font-medium text-slate-900">
-                      {onlineClass.schedule}
-                    </span>
-                  </p>
-                )}
-              </div>
+            {/* Badges: Level / Mode / Price / Certificate */}
+            <div className="mt-4 flex flex-wrap gap-2">
+              {onlineClass.mode && (
+                <Badge variant="primary" size="md">
+                  {formatMode(onlineClass.mode)}
+                </Badge>
+              )}
+              {onlineClass.level && (
+                <Badge variant="secondary" size="md">
+                  {formatLevel(onlineClass.level)}
+                </Badge>
+              )}
+              {isFree ? (
+                <Badge variant="success" size="md">
+                  Free
+                </Badge>
+              ) : (
+                <Badge variant="outline" size="md">
+                  {formatPrice(onlineClass.price)}
+                </Badge>
+              )}
+              {onlineClass.certificateAvailability && (
+                <Badge variant="warning" size="md">
+                  Certificate Provided
+                </Badge>
+              )}
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex w-full flex-col gap-2.5 sm:w-auto">
-              {hasEnrollmentLink ? (
-                <a
-                  href={onlineClass.enrollmentLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center rounded-xl bg-[#5472FC] px-6 py-3 text-base font-black text-white shadow-sm transition-all hover:bg-[#435DDE] focus:outline-none focus:ring-2 focus:ring-[#5472FC] focus:ring-offset-2"
-                >
-                  Enroll Now ↗
-                </a>
-              ) : (
-                <Button
-                  variant="primary"
-                  size="lg"
-                  onClick={() =>
-                    isAuthenticated ? setShowInquireModal(true) : navigate("/login")
-                  }
-                  className="whitespace-nowrap"
-                >
-                  Contact for Enrollment
-                </Button>
+            {/* Meta information */}
+            <div className="mt-5 space-y-1.5 text-sm text-slate-600">
+              {onlineClass.duration && (
+                <p className="flex items-center gap-1.5">
+                  <Icon name="clock" className="h-4 w-4 text-slate-400" />
+                  <span className="font-semibold text-slate-900">
+                    {onlineClass.duration}
+                  </span>
+                </p>
+              )}
+              <p className="flex items-center gap-1.5">
+                <Icon name="target" className="h-4 w-4 text-slate-400" />
+                <span className="font-semibold text-slate-900">
+                  {formatStartDate(onlineClass.startDate)}
+                </span>
+              </p>
+              {onlineClass.schedule && (
+                <p className="flex items-center gap-1.5">
+                  <Icon name="pin" className="h-4 w-4 text-slate-400" />
+                  <span className="font-medium text-slate-900">
+                    {onlineClass.schedule}
+                  </span>
+                </p>
               )}
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Main Body Content */}
-      <div className="mx-auto max-w-5xl px-5 py-8 sm:px-8">
+          {/* Action Buttons */}
+          <div className="flex w-full shrink-0 flex-col gap-2.5 sm:w-48">
+            {hasEnrollmentLink ? (
+              <a
+                href={onlineClass.enrollmentLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center rounded-full bg-[#5472FC] px-6 py-3 text-sm font-black text-white shadow-sm shadow-[#5472FC]/30 transition-all hover:-translate-y-0.5 hover:bg-[#435DDE] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#5472FC] focus:ring-offset-2"
+              >
+                Enroll Now ↗
+              </a>
+            ) : (
+              <Button
+                variant="primary"
+                size="lg"
+                onClick={() =>
+                  isAuthenticated ? setShowInquireModal(true) : navigate("/login")
+                }
+                className="whitespace-nowrap"
+              >
+                Contact for Enrollment
+              </Button>
+            )}
+          </div>
+        </Reveal>
+
+        {/* Main Body Content */}
+        <div className="pb-16">
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Main Content Column */}
           <div className="space-y-6 lg:col-span-2">
@@ -395,6 +401,7 @@ function OnlineClassDetail() {
         >
           ← Back to Online Classes
         </Button>
+        </div>
       </div>
 
       {/* Contact for Enrollment Inquiry Modal */}

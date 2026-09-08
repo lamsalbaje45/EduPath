@@ -14,7 +14,7 @@ export const EmptyState = ({
 }) => {
   return (
     <div
-      className={`flex min-h-screen flex-col items-center justify-center rounded-xl border border-gray-200 bg-gray-50 p-8 text-center ${className}`}
+      className={`flex flex-col items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-10 text-center ${className}`}
     >
       {Icon && (
         <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#E7EEFF]">
@@ -30,7 +30,7 @@ export const EmptyState = ({
         <button
           type="button"
           onClick={onAction}
-          className="rounded-xl bg-[#5472FC] px-6 py-2.5 text-sm font-black text-white transition-colors hover:bg-[#435DDE]"
+          className="rounded-full bg-[#5472FC] px-6 py-2.5 text-sm font-black text-white shadow-sm shadow-[#5472FC]/30 transition-all hover:-translate-y-0.5 hover:bg-[#435DDE] hover:shadow-md"
         >
           {action || actionLabel}
         </button>

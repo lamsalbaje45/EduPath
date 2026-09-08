@@ -5,14 +5,13 @@ import {
   Card,
   Skeleton,
   Badge,
-  Button,
   Input,
   Select,
   Pagination,
-  LoadingSpinner,
   EmptyState,
   ErrorBanner,
 } from "../components/ui";
+import { Reveal, SectionLabel, GradientCard } from "../components/ui/design";
 
 /**
  * Colleges Browse Page
@@ -199,35 +198,41 @@ function CollegeListing() {
 
   return (
     <main className="bg-white">
+      <section className="relative overflow-hidden bg-[#F7F8FA]">
+        <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 sm:py-14 lg:px-10">
+          <Reveal>
+            <SectionLabel>Colleges</SectionLabel>
+            <h1 className="text-4xl font-black leading-tight text-slate-950 sm:text-5xl">
+              Explore Colleges
+            </h1>
+            <p className="mt-3 max-w-xl text-sm leading-6 text-slate-500">
+              Find colleges and programs that match your interests and goals.
+            </p>
+          </Reveal>
+
+          <Reveal
+            delay={100}
+            className="mt-8 grid gap-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm md:grid-cols-3"
+          >
+            <Input
+              placeholder="Search colleges, cities, courses..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="md:col-span-2"
+            />
+            <Select
+              value={sortBy}
+              onChange={(e) => {
+                setSortBy(e.target.value);
+                setCurrentPage(1);
+              }}
+              options={SORT_OPTIONS}
+            />
+          </Reveal>
+        </div>
+      </section>
+
       <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8 lg:px-10">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-black text-slate-950">
-            Explore Colleges
-          </h1>
-          <p className="mt-2 text-gray-600">
-            Find colleges and programs that match your interests and goals
-          </p>
-        </div>
-
-        {/* Search & Sort */}
-        <div className="mb-8 grid gap-4 md:grid-cols-3">
-          <Input
-            placeholder="Search colleges, cities, courses..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="md:col-span-2"
-          />
-          <Select
-            value={sortBy}
-            onChange={(e) => {
-              setSortBy(e.target.value);
-              setCurrentPage(1);
-            }}
-            options={SORT_OPTIONS}
-          />
-        </div>
-
         {/* Error Banner */}
         {error && (
           <ErrorBanner
@@ -356,11 +361,13 @@ function CollegeListing() {
             {loading ? (
               <div className="grid gap-6 sm:grid-cols-2">
                 {Array.from({ length: 6 }).map((_, idx) => (
-                  <Card key={idx}>
-                    <Skeleton className="mb-4 h-48" />
-                    <Skeleton className="mb-2 h-4 w-3/4" />
-                    <Skeleton className="h-3 w-1/2" />
-                  </Card>
+                  <div key={idx} className="overflow-hidden rounded-2xl border border-gray-100 bg-white">
+                    <Skeleton className="h-28 rounded-none" />
+                    <div className="p-4">
+                      <Skeleton className="mb-2 h-4 w-3/4" />
+                      <Skeleton className="h-3 w-1/2" />
+                    </div>
+                  </div>
                 ))}
               </div>
             ) : colleges.length === 0 ? (
@@ -373,89 +380,60 @@ function CollegeListing() {
             ) : (
               <>
                 <div className="grid gap-6 sm:grid-cols-2">
-                  {colleges.map((college) => (
-                    <Card
-                      key={college._id}
-                      hover
-                      className="flex flex-col overflow-hidden"
-                      onClick={() => navigate(`/colleges/${college._id}`)}
-                    >
-                      {/* Image */}
-                      {college.images?.[0] && (
-                        <div className="mb-4 h-40 w-full bg-gray-200">
-                          <img
-                            src={college.images[0]}
-                            alt={college.collegeName}
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                      )}
+                  {colleges.map((college, index) => {
+                    const statusVariant =
+                      college.admissionStatus === "open"
+                        ? "success"
+                        : college.admissionStatus === "closed"
+                          ? "danger"
+                          : "warning";
+                    const statusLabel =
+                      college.admissionStatus === "open"
+                        ? "Open for Admission"
+                        : college.admissionStatus === "closed"
+                          ? "Admission Closed"
+                          : "Coming Soon";
 
-                      {/* Content */}
-                      <div>
-                        <h3 className="mb-1 text-lg font-black text-slate-950">
-                          {college.collegeName}
-                        </h3>
-                        <p className="mb-3 text-xs text-gray-600">
-                          {college.city}
-                          {college.affiliation && ` • ${college.affiliation}`}
-                        </p>
-
-                        {/* Rating */}
-                        <div className="mb-3 flex items-center gap-2">
-                          <span className="text-xs font-semibold text-gray-600">
-                            Rating {college.rating.toFixed(1)} / 5
-                          </span>
-                        </div>
-
-                        {/* Status Badge */}
-                        <div className="mb-3">
-                          <Badge
-                            variant={
-                              college.admissionStatus === "open"
-                                ? "success"
-                                : college.admissionStatus === "closed"
-                                  ? "danger"
-                                  : "warning"
-                            }
-                            size="sm"
-                          >
-                            {college.admissionStatus === "open"
-                              ? "Open for Admission"
-                              : college.admissionStatus === "closed"
-                                ? "Admission Closed"
-                                : "Coming Soon"}
-                          </Badge>
-                        </div>
-
-                        {/* Course Tags */}
-                        {college.courses?.length > 0 && (
-                          <div className="mb-4 flex flex-wrap gap-1.5">
-                            {college.courses.slice(0, 3).map((course) => (
+                    return (
+                      <Reveal key={college._id} delay={(index % 6) * 60}>
+                        <GradientCard
+                          accent="blue"
+                          icon="graduation"
+                          kicker="College"
+                          onClick={() => navigate(`/colleges/${college._id}`)}
+                          badge={
+                            college.rating > 0 ? (
+                              <span className="rounded-md bg-white/95 px-2 py-0.5 text-[10px] font-black text-amber-600">
+                                {college.rating.toFixed(1)} ★
+                              </span>
+                            ) : null
+                          }
+                          title={college.collegeName}
+                          subtitle={college.affiliation || "Affiliated program"}
+                          metaItems={[
+                            { icon: "pin", text: college.city || "Nepal" },
+                          ]}
+                          footer="View details"
+                        >
+                          <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                            <Badge variant={statusVariant} size="sm">
+                              {statusLabel}
+                            </Badge>
+                            {college.courses?.slice(0, 2).map((course) => (
                               <Badge key={course} variant="secondary" size="sm">
                                 {course}
                               </Badge>
                             ))}
-                            {college.courses.length > 3 && (
+                            {college.courses?.length > 2 && (
                               <Badge variant="outline" size="sm">
-                                +{college.courses.length - 3} more
+                                +{college.courses.length - 2} more
                               </Badge>
                             )}
                           </div>
-                        )}
-
-                        {/* View Details Button */}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full"
-                          onClick={() => navigate(`/colleges/${college._id}`)}
-                        >
-                          View Details
-                        </Button>
-                      </div>
-                    </Card>
-                  ))}
+                        </GradientCard>
+                      </Reveal>
+                    );
+                  })}
                 </div>
 
                 {/* Pagination */}

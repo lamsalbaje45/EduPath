@@ -7,11 +7,11 @@ import {
   Badge,
   Button,
   Input,
-  Pagination,
   LoadingSpinner,
   EmptyState,
   ErrorBanner,
 } from "../components/ui";
+import { Icon, Blob, Reveal, SectionLabel } from "../components/ui/design";
 
 /**
  * College Detail Page
@@ -318,43 +318,49 @@ function CollegeDetail() {
   }
 
   return (
-    <main className="bg-gray-50">
+    <main className="bg-white">
       {/* Hero Header */}
-      <div className="bg-white shadow-sm">
+      <section className="relative overflow-hidden">
         {college.images && college.images[0] ? (
-          <div className="h-96 w-full overflow-hidden bg-gray-200">
+          <div className="relative h-72 w-full overflow-hidden sm:h-80">
             <img
               src={college.images[0]}
               alt={college.collegeName}
               className="h-full w-full object-cover"
             />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
           </div>
         ) : (
-          <div className="h-96 w-full bg-linear-to-r from-[#5472FC]/20 to-[#2551D9]/20" />
+          <div className="relative flex h-72 w-full items-center justify-center overflow-hidden bg-gradient-to-br from-[#5472FC] to-[#22308F] sm:h-80">
+            <Blob className="-right-10 -top-16 h-64 w-64 animate-blob bg-white/10" />
+            <Blob className="-bottom-20 -left-14 h-72 w-72 animate-blob animation-delay-2000 bg-white/10" />
+            <Icon name="graduation" className="h-20 w-20 text-white/25 sm:h-28 sm:w-28" />
+          </div>
         )}
-      </div>
+      </section>
 
-      <div className="mx-auto max-w-4xl px-5 py-8 sm:px-8">
+      <div className="mx-auto max-w-4xl px-5 pb-16 sm:px-8">
         {/* College Info */}
-        <div className="mb-8 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-start">
+        <Reveal className="relative z-10 -mt-16 mb-8 flex flex-col items-start justify-between gap-6 rounded-2xl border border-gray-100 bg-white p-6 shadow-xl sm:-mt-20 sm:flex-row sm:p-8">
           <div className="flex-1">
-            <h1 className="text-4xl font-black text-slate-950">
+            <SectionLabel>College</SectionLabel>
+            <h1 className="text-3xl font-black leading-tight text-slate-950 sm:text-4xl">
               {college.collegeName}
             </h1>
-            <p className="mt-2 text-lg text-gray-600">
+            <p className="mt-2 flex items-center gap-1.5 text-sm font-semibold text-slate-500">
+              <Icon name="pin" className="h-4 w-4" />
               {college.city}
               {college.affiliation && ` • ${college.affiliation}`}
             </p>
 
-            {/* Rating */}
-            <div className="mt-3 flex items-center gap-3">
-              <span className="font-semibold text-gray-700">
-                Rating {college.rating.toFixed(1)} / 5
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              {/* Rating */}
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 text-xs font-black text-amber-600">
+                <Icon name="star" className="h-3.5 w-3.5" />
+                {college.rating.toFixed(1)} / 5
               </span>
-            </div>
 
-            {/* Status Badge */}
-            <div className="mt-4">
+              {/* Status Badge */}
               <Badge
                 variant={
                   college.admissionStatus === "open"
@@ -375,7 +381,7 @@ function CollegeDetail() {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col gap-2 sm:flex-col">
+          <div className="flex w-full shrink-0 flex-col gap-2 sm:w-48">
             <Button
               variant="primary"
               size="lg"
@@ -395,7 +401,7 @@ function CollegeDetail() {
               {isSaved ? "Saved" : "Save College"}
             </Button>
           </div>
-        </div>
+        </Reveal>
 
         {/* Tabs */}
         <div className="mb-8 border-b border-gray-200">
@@ -406,7 +412,7 @@ function CollegeDetail() {
                 onClick={() => setActiveTab(tab)}
                 className={`whitespace-nowrap border-b-2 px-1 py-4 text-sm font-black transition-colors ${
                   activeTab === tab
-                    ? "border-[#5472FC] text-[#5472FC]"
+                    ? "border-[#5472FC] text-[#2551D9]"
                     : "border-transparent text-gray-600 hover:text-gray-900"
                 }`}
               >
@@ -427,7 +433,7 @@ function CollegeDetail() {
               {college.images.map((image, idx) => (
                 <div
                   key={idx}
-                  className="h-48 w-full overflow-hidden rounded-xl bg-gray-200 shadow-sm"
+                  className="h-48 w-full overflow-hidden rounded-2xl bg-gray-200 shadow-sm"
                 >
                   <img
                     src={image}

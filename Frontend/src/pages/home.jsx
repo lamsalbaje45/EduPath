@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import * as api from '../api/endpoints'
+import { Icon, Blob, Reveal, SectionLabel, Pill } from '../components/ui/design'
+import { categoryStyles } from '../components/ui/tokens'
 
 const defaultStaticRecommendations = [
   {
@@ -208,111 +210,6 @@ function formatRecommendationItem(item) {
   }
 }
 
-const iconPaths = {
-  profile: 'M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0ZM5.5 21a6.5 6.5 0 0 1 13 0',
-  target: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0-3.2a.8.8 0 1 0 0-1.6.8.8 0 0 0 0 1.6Z',
-  rocket:
-    'M14.5 3.5c2.5.5 5 3 5.5 5.5.5 2.5-1 6-4.5 9.5l-2-2-2-2c3.5-3.5 7-5 9.5-4.5M6 15l-2.5 2.5M9 18l-2.5 2.5M9.5 14.5 5 10c1-2 3-3.5 5-4l4.5 4.5c-.5 2-2 4-5 4Z',
-  user: 'M15.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0ZM5 20a7 7 0 0 1 14 0',
-  building: 'M4 21V5a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v16M12 21v-8a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v8M4 21h16M7.5 7h1M7.5 11h1M7.5 15h1M15.5 12h1M15.5 16h1',
-  briefcase:
-    'M4 8h16a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Zm4 0V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18',
-  chalkboard: 'M4 4h16v11H4V4Zm4 15 4-4 4 4M4 19h16',
-  document: 'M8 3h6l4 4v14a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Zm5 0v4h4M9 12h6M9 15.5h6M9 8.5h2',
-  graduation: 'M3 9.5 12 5l9 4.5-9 4.5-9-4.5Zm4.5 2.5v4c0 1.5 2 3 4.5 3s4.5-1.5 4.5-3v-4M20 9.5V15',
-  laptop: 'M5 4h14a1 1 0 0 1 1 1v10H4V5a1 1 0 0 1 1-1Zm-3 13h20l-1.5 3a1 1 0 0 1-1 .6H4.5a1 1 0 0 1-1-.6L2 17Z',
-  pin: 'M12 21s7-6.5 7-11a7 7 0 1 0-14 0c0 4.5 7 11 7 11Zm0-8a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z',
-  clock: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0-13v4.5l3 2',
-  plus: 'M12 5v14M5 12h14',
-}
-
-function Icon({ name, className = 'h-5 w-5' }) {
-  const d = iconPaths[name]
-  if (!d) return null
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
-      <path d={d} stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
-
-function Blob({ className }) {
-  return <div aria-hidden="true" className={`pointer-events-none absolute rounded-full blur-3xl ${className}`} />
-}
-
-function Reveal({ children, className = '', delay = 0, as: Tag = 'div' }) {
-  const ref = useRef(null)
-  const [visible, setVisible] = useState(() => typeof IntersectionObserver === 'undefined')
-
-  useEffect(() => {
-    const el = ref.current
-    if (!el || typeof IntersectionObserver === 'undefined') return undefined
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true)
-          observer.disconnect()
-        }
-      },
-      { threshold: 0.15, rootMargin: '0px 0px -40px 0px' }
-    )
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [])
-
-  return (
-    <Tag
-      ref={ref}
-      style={{ transitionDelay: visible ? `${delay}ms` : '0ms' }}
-      className={`transition-all duration-700 ease-out ${
-        visible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
-      } ${className}`}
-    >
-      {children}
-    </Tag>
-  )
-}
-
-function Pill({ children, onClick }) {
-  const interactive = typeof onClick === 'function'
-  return (
-    <span
-      role={interactive ? 'button' : undefined}
-      tabIndex={interactive ? 0 : undefined}
-      onClick={onClick}
-      onKeyDown={
-        interactive
-          ? (e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault()
-                onClick(e)
-              }
-            }
-          : undefined
-      }
-      className={`inline-flex rounded-full border border-gray-200 bg-white px-3 py-1.5 text-[11px] font-black text-slate-950 ${
-        interactive ? 'cursor-pointer transition-colors hover:border-[#5472FC] hover:bg-[#E7EEFF] hover:text-[#2551D9]' : ''
-      }`}
-    >
-      {children}
-    </span>
-  )
-}
-
-function SectionLabel({ children, tone = 'light' }) {
-  return (
-    <p
-      className={`mb-4 inline-flex rounded-full px-3 py-1.5 text-[11px] font-black ${
-        tone === 'dark'
-          ? 'bg-white/10 text-[#B8CAFF] ring-1 ring-white/20'
-          : 'bg-[#E7EEFF] text-[#2551D9]'
-      }`}
-    >
-      {children}
-    </p>
-  )
-}
-
 function StatBlock({ value, label, icon }) {
   return (
     <div className="flex flex-col items-center gap-3">
@@ -404,14 +301,6 @@ function CarouselRow({ children }) {
       )}
     </div>
   )
-}
-
-const categoryStyles = {
-  blue: 'from-[#5472FC] to-[#22308F]',
-  emerald: 'from-emerald-500 to-emerald-800',
-  violet: 'from-violet-500 to-violet-800',
-  amber: 'from-amber-500 to-amber-700',
-  rose: 'from-rose-500 to-rose-700',
 }
 
 function FeaturedCard({ onClick, accent = 'blue', icon, kicker, badge, title, subtitle, metaItems, footer }) {
@@ -690,7 +579,7 @@ function Home() {
   const quickTags = activeSearchTab === 0 ? collegeTags : activeSearchTab === 1 ? opportunityTags : classTags
 
   return (
-    <main className="overflow-x-hidden bg-white font-sans text-slate-950">
+    <main className="overflow-x-clip bg-white font-sans text-slate-950">
       {/* Hero -- bold dark banner with a floating white "course card"-style
           recommendation panel, inspired by edX's homepage hero. */}
       <section className="relative overflow-hidden bg-ink">

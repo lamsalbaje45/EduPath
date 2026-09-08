@@ -4,9 +4,10 @@
  */
 
 const variants = {
-  primary: "bg-[#5472FC] text-white hover:bg-[#435DDE] active:bg-[#2551D9]",
+  primary:
+    "bg-[#5472FC] text-white shadow-sm shadow-[#5472FC]/30 hover:-translate-y-0.5 hover:bg-[#435DDE] hover:shadow-md active:bg-[#2551D9]",
   outline:
-    "border border-[#5472FC] bg-white text-[#5472FC] hover:bg-[#5472FC]/5",
+    "border border-[#5472FC] bg-white text-[#5472FC] hover:-translate-y-0.5 hover:bg-[#5472FC] hover:text-white",
   ghost: "text-[#5472FC] hover:bg-[#5472FC]/10 hover:text-[#2551D9]",
   secondary: "bg-slate-100 text-slate-900 hover:bg-slate-200",
   danger: "bg-red-600 text-white hover:bg-red-700 active:bg-red-800",
@@ -38,7 +39,7 @@ export const Button = ({
   ...props
 }) => {
   const baseClasses =
-    "inline-flex items-center justify-center rounded-xl font-sans transition-all focus:outline-none focus:ring-2 focus:ring-[#5472FC] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70";
+    "inline-flex items-center justify-center rounded-full font-sans transition-all focus:outline-none focus:ring-2 focus:ring-[#5472FC] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0";
   const variantClasses = variants[variant] || variants.primary;
   const sizeClasses = sizes[size] || sizes.md;
 

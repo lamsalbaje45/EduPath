@@ -11,9 +11,9 @@ export const Card = ({
   ...props
 }) => {
   const baseClasses =
-    "rounded-xl border border-gray-200 bg-white p-6 shadow-sm";
+    "rounded-2xl border border-gray-200 bg-white p-6 shadow-sm";
   const hoverClasses = hover
-    ? "transition-all hover:shadow-md hover:border-[#5472FC]/50 cursor-pointer"
+    ? "transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-[#B8CAFF] cursor-pointer"
     : "";
 
   return (

@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import * as api from "../api/endpoints";
 import {
   Badge,
-  Button,
   Card,
   EmptyState,
   ErrorBanner,
@@ -12,6 +11,7 @@ import {
   Select,
   Skeleton,
 } from "../components/ui";
+import { Reveal, SectionLabel, GradientCard } from "../components/ui/design";
 
 /**
  * Jobs & Internships Browse Page
@@ -243,68 +243,76 @@ function JobsListing() {
 
   return (
     <main className="bg-white">
+      <section className="relative overflow-hidden bg-[#F7F8FA]">
+        <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 sm:py-14 lg:px-10">
+          <Reveal>
+            <SectionLabel>Jobs and internships</SectionLabel>
+            <h1 className="text-4xl font-black leading-tight text-slate-950 sm:text-5xl">
+              Jobs & Internships
+            </h1>
+            <p className="mt-3 max-w-xl text-sm leading-6 text-slate-500">
+              Discover opportunities that match your skills, interests, and courses.
+            </p>
+          </Reveal>
+
+          {/* Type Filter Tabs (All / Jobs / Internships) */}
+          <Reveal
+            delay={80}
+            className="mt-8 flex flex-wrap gap-2"
+            as="div"
+          >
+            <div role="tablist" aria-label="Opportunity types" className="flex flex-wrap gap-2">
+              {OPPORTUNITY_TYPES.map((tab) => {
+                const isActive = type === tab.value;
+                return (
+                  <button
+                    key={tab.value || "all"}
+                    type="button"
+                    role="tab"
+                    aria-selected={isActive}
+                    onClick={() => {
+                      setType(tab.value);
+                      setCurrentPage(1);
+                    }}
+                    className={`rounded-full px-5 py-2 text-sm font-black transition-all ${
+                      isActive
+                        ? "bg-[#5472FC] text-white shadow-sm shadow-[#5472FC]/30"
+                        : "bg-white text-slate-700 ring-1 ring-gray-200 hover:ring-[#5472FC] hover:text-[#2551D9]"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
+          </Reveal>
+
+          <Reveal
+            delay={140}
+            className="mt-4 grid gap-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm md:grid-cols-3"
+          >
+            <Input
+              placeholder="Search jobs, companies, or skills..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="md:col-span-2"
+            />
+            <Select
+              value={sortBy}
+              onChange={(e) => {
+                setSortBy(e.target.value);
+                setCurrentPage(1);
+              }}
+              options={SORT_OPTIONS}
+            />
+          </Reveal>
+        </div>
+      </section>
+
       <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8 lg:px-10">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-black text-slate-950">
-            Jobs & Internships
-          </h1>
-          <p className="mt-2 text-gray-600">
-            Discover opportunities that match your skills, interests, and courses
-          </p>
-        </div>
-
-        {/* Type Filter Tabs (All / Jobs / Internships) */}
-        <div
-          className="mb-6 flex flex-wrap gap-2"
-          role="tablist"
-          aria-label="Opportunity types"
-        >
-          {OPPORTUNITY_TYPES.map((tab) => {
-            const isActive = type === tab.value;
-            return (
-              <button
-                key={tab.value || "all"}
-                type="button"
-                role="tab"
-                aria-selected={isActive}
-                onClick={() => {
-                  setType(tab.value);
-                  setCurrentPage(1);
-                }}
-                className={`rounded-full px-5 py-2 text-sm font-semibold transition-colors ${
-                  isActive
-                    ? "bg-[#5472FC] text-white shadow-sm"
-                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                }`}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Search Input & Sort Dropdown */}
-        <div className="mb-8 grid gap-4 md:grid-cols-3">
-          <Input
-            placeholder="Search jobs, companies, or skills..."
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="md:col-span-2"
-          />
-          <Select
-            value={sortBy}
-            onChange={(e) => {
-              setSortBy(e.target.value);
-              setCurrentPage(1);
-            }}
-            options={SORT_OPTIONS}
-          />
-        </div>
-
         {/* Error Banner */}
         {error && (
           <ErrorBanner
@@ -452,12 +460,13 @@ function JobsListing() {
             {loading ? (
               <div className="grid gap-6 sm:grid-cols-2">
                 {Array.from({ length: 6 }).map((_, idx) => (
-                  <Card key={idx}>
-                    <Skeleton className="mb-4 h-6 w-3/4" />
-                    <Skeleton className="mb-3 h-4 w-1/2" />
-                    <Skeleton className="mb-4 h-16" />
-                    <Skeleton className="h-9 w-full" />
-                  </Card>
+                  <div key={idx} className="overflow-hidden rounded-2xl border border-gray-100 bg-white">
+                    <Skeleton className="h-28 rounded-none" />
+                    <div className="p-4">
+                      <Skeleton className="mb-2 h-4 w-3/4" />
+                      <Skeleton className="h-3 w-1/2" />
+                    </div>
+                  </div>
                 ))}
               </div>
             ) : opportunities.length === 0 ? (
@@ -470,111 +479,64 @@ function JobsListing() {
             ) : (
               <>
                 <div className="grid gap-6 sm:grid-cols-2">
-                  {opportunities.map((opportunity) => {
+                  {opportunities.map((opportunity, index) => {
                     const deadlineText = deadlineLabel(opportunity);
                     const isClosed =
                       deadlineText === "Closed" ||
                       opportunity.status !== "active";
 
                     return (
-                      <Card
-                        key={opportunity._id}
-                        hover
-                        className="flex flex-col justify-between"
-                        onClick={() => navigate(`/jobs/${opportunity._id}`)}
-                      >
-                        <div>
-                          {/* Title & Company */}
-                          <div className="mb-1 flex items-center gap-2">
-                            {opportunity.companyLogo && (
-                              <img
-                                src={opportunity.companyLogo}
-                                alt={opportunity.companyName}
-                                className="h-8 w-8 shrink-0 rounded-lg object-cover"
-                              />
-                            )}
-                            <h2 className="text-lg font-black text-slate-950">
-                              {opportunity.title}
-                            </h2>
-                          </div>
-                          <p className="mb-3 text-sm font-semibold text-gray-600">
-                            {opportunity.companyName}
-                          </p>
-
-                          {/* Badges: Type & Work Mode */}
-                          <div className="mb-3 flex flex-wrap gap-1.5">
-                            <Badge variant="primary" size="sm">
-                              {toTitleCase(opportunity.type)}
-                            </Badge>
-                            {opportunity.workMode && (
-                              <Badge variant="secondary" size="sm">
+                      <Reveal key={opportunity._id} delay={(index % 6) * 60}>
+                        <GradientCard
+                          accent="emerald"
+                          icon="briefcase"
+                          kicker={toTitleCase(opportunity.type)}
+                          onClick={() => navigate(`/jobs/${opportunity._id}`)}
+                          badge={
+                            opportunity.workMode ? (
+                              <span className="rounded-md bg-white/95 px-2 py-0.5 text-[10px] font-black uppercase text-emerald-700">
                                 {toTitleCase(opportunity.workMode)}
-                              </Badge>
-                            )}
+                              </span>
+                            ) : null
+                          }
+                          title={opportunity.title}
+                          subtitle={opportunity.companyName}
+                          metaItems={[
+                            opportunity.location
+                              ? { icon: "pin", text: opportunity.location }
+                              : null,
+                            opportunity.stipendOrSalaryRange
+                              ? { icon: "briefcase", text: opportunity.stipendOrSalaryRange }
+                              : null,
+                          ].filter(Boolean)}
+                          footer="View details"
+                        >
+                          <div className="mt-3 flex flex-wrap items-center gap-1.5">
                             {opportunity.status && opportunity.status !== "active" && (
                               <Badge variant="danger" size="sm">
                                 {toTitleCase(opportunity.status)}
                               </Badge>
                             )}
-                          </div>
-
-                          {/* Location & Compensation */}
-                          <div className="mb-3 space-y-1 text-sm text-gray-600">
-                            {opportunity.location && (
-                              <p className="flex items-center gap-1">
-                                <span>{opportunity.location}</span>
-                              </p>
-                            )}
-                            {opportunity.stipendOrSalaryRange && (
-                              <p className="font-semibold text-slate-900">
-                                {opportunity.stipendOrSalaryRange}
-                              </p>
+                            {opportunity.requiredSkills?.slice(0, 2).map((skill) => (
+                              <Badge key={skill} variant="secondary" size="sm">
+                                {skill}
+                              </Badge>
+                            ))}
+                            {opportunity.requiredSkills?.length > 2 && (
+                              <Badge variant="outline" size="sm">
+                                +{opportunity.requiredSkills.length - 2} more
+                              </Badge>
                             )}
                           </div>
-
-                          {/* Top 3 Required Skills Chips */}
-                          {opportunity.requiredSkills?.length > 0 && (
-                            <div className="mb-4 flex flex-wrap gap-1.5">
-                              {opportunity.requiredSkills
-                                .slice(0, 3)
-                                .map((skill) => (
-                                  <Badge key={skill} variant="outline" size="sm">
-                                    {skill}
-                                  </Badge>
-                                ))}
-                              {opportunity.requiredSkills.length > 3 && (
-                                <Badge variant="outline" size="sm">
-                                  +{opportunity.requiredSkills.length - 3} more
-                                </Badge>
-                              )}
-                            </div>
-                          )}
-                        </div>
-
-                        <div>
-                          {/* Deadline countdown */}
                           <p
-                            className={`mb-4 text-xs font-bold ${
+                            className={`mt-3 text-xs font-bold ${
                               isClosed ? "text-red-600" : "text-emerald-700"
                             }`}
                           >
                             {deadlineText}
                           </p>
-
-                          {/* View details button */}
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="w-full"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/jobs/${opportunity._id}`);
-                            }}
-                          >
-                            View details
-                          </Button>
-                        </div>
-                      </Card>
+                        </GradientCard>
+                      </Reveal>
                     );
                   })}
                 </div>

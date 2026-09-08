@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import * as api from "../api/endpoints";
 import {
-  Badge,
   Button,
   Card,
   ErrorBanner,
@@ -561,23 +560,18 @@ function CvMaker() {
               Save CV
             </Button>
 
-            <Button
-              variant="primary"
-              size="md"
-              onClick={handlePrintPdf}
-              className="bg-[#5472FC] hover:bg-[#435DDE]"
-            >
+            <Button variant="primary" size="md" onClick={handlePrintPdf}>
               Download PDF
             </Button>
           </div>
         </div>
 
         {/* Mobile View Toggle (Form vs Preview) */}
-        <div className="no-print mb-4 flex rounded-xl bg-gray-200 p-1 lg:hidden">
+        <div className="no-print mb-4 flex rounded-full bg-gray-200 p-1 lg:hidden">
           <button
             type="button"
             onClick={() => setMobileView("form")}
-            className={`flex-1 rounded-lg py-2.5 text-sm font-bold transition-all ${
+            className={`flex-1 rounded-full py-2.5 text-sm font-bold transition-all ${
               mobileView === "form"
                 ? "bg-white text-[#5472FC] shadow-sm"
                 : "text-gray-600 hover:text-gray-900"
@@ -588,7 +582,7 @@ function CvMaker() {
           <button
             type="button"
             onClick={() => setMobileView("preview")}
-            className={`flex-1 rounded-lg py-2.5 text-sm font-bold transition-all ${
+            className={`flex-1 rounded-full py-2.5 text-sm font-bold transition-all ${
               mobileView === "preview"
                 ? "bg-white text-[#5472FC] shadow-sm"
                 : "text-gray-600 hover:text-gray-900"
@@ -662,10 +656,10 @@ function CvMaker() {
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveSection(tab.id)}
-                  className={`whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
+                  className={`whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-bold transition-all ${
                     activeSection === tab.id
-                      ? "bg-[#5472FC] text-white"
-                      : "bg-white text-gray-700 hover:bg-gray-100"
+                      ? "bg-[#5472FC] text-white shadow-sm shadow-[#5472FC]/30"
+                      : "bg-white text-gray-700 ring-1 ring-gray-200 hover:bg-gray-100"
                   }`}
                 >
                   {tab.label}
@@ -1027,13 +1021,13 @@ function CvMaker() {
                   {skillList.map((skill) => (
                     <span
                       key={skill}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-3 py-1.5 text-sm font-bold text-[#5472FC]"
+                      className="inline-flex items-center gap-1.5 rounded-full bg-[#E7EEFF] px-3.5 py-1.5 text-sm font-bold text-[#2551D9]"
                     >
                       {skill}
                       <button
                         type="button"
                         onClick={() => handleRemoveSkill(skill)}
-                        className="text-blue-400 hover:text-blue-700"
+                        className="text-[#5472FC] hover:text-[#2551D9]"
                       >
                         ×
                       </button>
@@ -1282,7 +1276,7 @@ function CvMaker() {
                     {languages.map((lang) => (
                       <span
                         key={lang}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 text-sm font-bold text-gray-800"
+                        className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3.5 py-1.5 text-sm font-bold text-gray-800"
                       >
                         {lang}
                         <button

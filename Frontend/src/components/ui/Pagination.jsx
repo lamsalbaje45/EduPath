@@ -52,7 +52,7 @@ export const Pagination = ({
         type="button"
         disabled={!canGoPrev}
         onClick={() => handlePageClick(currentPage - 1)}
-        className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 text-gray-900 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-white dark:hover:bg-slate-800"
+        className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-gray-900 transition-colors hover:border-[#5472FC] hover:bg-[#E7EEFF] hover:text-[#2551D9] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-gray-200 disabled:hover:bg-transparent disabled:hover:text-gray-900 dark:border-slate-700 dark:text-white dark:hover:bg-slate-800"
       >
         <svg
           className="h-5 w-5"
@@ -85,10 +85,10 @@ export const Pagination = ({
               key={page}
               type="button"
               onClick={() => handlePageClick(page)}
-              className={`flex h-10 w-10 items-center justify-center rounded-lg border text-sm font-medium transition-colors ${
+              className={`flex h-10 w-10 items-center justify-center rounded-full border text-sm font-black transition-colors ${
                 isActive
-                  ? "border-[#5472FC] bg-[#5472FC] text-white"
-                  : "border-gray-200 text-gray-900 hover:bg-gray-50 dark:border-slate-700 dark:text-white dark:hover:bg-slate-800"
+                  ? "border-[#5472FC] bg-[#5472FC] text-white shadow-sm shadow-[#5472FC]/30"
+                  : "border-gray-200 text-gray-900 hover:border-[#5472FC] hover:bg-[#E7EEFF] hover:text-[#2551D9] dark:border-slate-700 dark:text-white dark:hover:bg-slate-800"
               }`}
             >
               {page}
@@ -102,7 +102,7 @@ export const Pagination = ({
         type="button"
         disabled={!canGoNext}
         onClick={() => handlePageClick(currentPage + 1)}
-        className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 text-gray-900 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-white dark:hover:bg-slate-800"
+        className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-gray-900 transition-colors hover:border-[#5472FC] hover:bg-[#E7EEFF] hover:text-[#2551D9] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-gray-200 disabled:hover:bg-transparent disabled:hover:text-gray-900 dark:border-slate-700 dark:text-white dark:hover:bg-slate-800"
       >
         <svg
           className="h-5 w-5"

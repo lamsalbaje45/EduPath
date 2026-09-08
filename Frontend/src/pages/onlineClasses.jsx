@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import * as api from "../api/endpoints";
 import {
   Badge,
-  Button,
   Card,
   EmptyState,
   ErrorBanner,
@@ -12,6 +11,7 @@ import {
   Select,
   Skeleton,
 } from "../components/ui";
+import { Reveal, SectionLabel, GradientCard } from "../components/ui/design";
 
 /**
  * Online Classes Browse Page
@@ -235,38 +235,44 @@ function OnlineClassesListing() {
 
   return (
     <main className="bg-white">
+      <section className="relative overflow-hidden bg-[#F7F8FA]">
+        <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 sm:py-14 lg:px-10">
+          <Reveal>
+            <SectionLabel>Online classes</SectionLabel>
+            <h1 className="text-4xl font-black leading-tight text-slate-950 sm:text-5xl">
+              Online Classes & Courses
+            </h1>
+            <p className="mt-3 max-w-xl text-sm leading-6 text-slate-500">
+              Learn new skills and advance your education with flexible online courses.
+            </p>
+          </Reveal>
+
+          <Reveal
+            delay={100}
+            className="mt-8 grid gap-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm md:grid-cols-3"
+          >
+            <Input
+              placeholder="Search classes, instructors, or subjects..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="md:col-span-2"
+            />
+            <Select
+              value={sortBy}
+              onChange={(e) => {
+                setSortBy(e.target.value);
+                setCurrentPage(1);
+              }}
+              options={SORT_OPTIONS}
+            />
+          </Reveal>
+        </div>
+      </section>
+
       <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8 lg:px-10">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-black text-slate-950">
-            Online Classes & Courses
-          </h1>
-          <p className="mt-2 text-gray-600">
-            Learn new skills and advance your education with flexible online courses
-          </p>
-        </div>
-
-        {/* Search Input & Sort Dropdown */}
-        <div className="mb-8 grid gap-4 md:grid-cols-3">
-          <Input
-            placeholder="Search classes, instructors, or subjects..."
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="md:col-span-2"
-          />
-          <Select
-            value={sortBy}
-            onChange={(e) => {
-              setSortBy(e.target.value);
-              setCurrentPage(1);
-            }}
-            options={SORT_OPTIONS}
-          />
-        </div>
-
         {/* Error Banner */}
         {error && (
           <ErrorBanner
@@ -403,12 +409,13 @@ function OnlineClassesListing() {
             {loading ? (
               <div className="grid gap-6 sm:grid-cols-2">
                 {Array.from({ length: 6 }).map((_, idx) => (
-                  <Card key={idx}>
-                    <Skeleton className="mb-4 h-6 w-3/4" />
-                    <Skeleton className="mb-3 h-4 w-1/2" />
-                    <Skeleton className="mb-4 h-16" />
-                    <Skeleton className="h-9 w-full" />
-                  </Card>
+                  <div key={idx} className="overflow-hidden rounded-2xl border border-gray-100 bg-white">
+                    <Skeleton className="h-28 rounded-none" />
+                    <div className="p-4">
+                      <Skeleton className="mb-2 h-4 w-3/4" />
+                      <Skeleton className="h-3 w-1/2" />
+                    </div>
+                  </div>
                 ))}
               </div>
             ) : classes.length === 0 ? (
@@ -421,99 +428,45 @@ function OnlineClassesListing() {
             ) : (
               <>
                 <div className="grid gap-6 sm:grid-cols-2">
-                  {classes.map((cls) => {
+                  {classes.map((cls, index) => {
                     const isFree = cls.price === 0 || cls.price === "0" || !cls.price;
 
                     return (
-                      <Card
-                        key={cls._id}
-                        hover
-                        className="flex flex-col justify-between"
-                        onClick={() => navigate(`/online-classes/${cls._id}`)}
-                      >
-                        <div>
-                          {/* Title & Instructor */}
-                          <h2 className="mb-1 text-lg font-black text-slate-950">
-                            {cls.classTitle}
-                          </h2>
-                          <p className="mb-3 text-sm font-semibold text-gray-600">
-                            {cls.instructorOrOrganization}
-                          </p>
-
-                          {/* Badges: Mode & Level */}
-                          <div className="mb-3 flex flex-wrap gap-1.5">
-                            {cls.mode && (
-                              <Badge variant="primary" size="sm">
-                                {formatMode(cls.mode)}
-                              </Badge>
-                            )}
-                            {cls.level && (
-                              <Badge variant="secondary" size="sm">
-                                {formatLevel(cls.level)}
-                              </Badge>
-                            )}
-                            {isFree ? (
-                              <Badge variant="success" size="sm">
-                                Free
-                              </Badge>
-                            ) : (
-                              <Badge variant="outline" size="sm">
-                                {formatPrice(cls.price)}
-                              </Badge>
-                            )}
-                            {cls.certificateAvailability && (
-                              <Badge variant="warning" size="sm">
+                      <Reveal key={cls._id} delay={(index % 6) * 60}>
+                        <GradientCard
+                          accent="violet"
+                          icon="laptop"
+                          kicker={formatMode(cls.mode) || "Online Class"}
+                          onClick={() => navigate(`/online-classes/${cls._id}`)}
+                          badge={
+                            cls.certificateAvailability ? (
+                              <span className="rounded-md bg-white/95 px-2 py-0.5 text-[10px] font-black text-violet-700">
                                 Certificate
+                              </span>
+                            ) : null
+                          }
+                          title={cls.classTitle}
+                          subtitle={cls.instructorOrOrganization}
+                          metaItems={[
+                            cls.duration ? { icon: "clock", text: cls.duration } : null,
+                            cls.level ? { icon: "target", text: formatLevel(cls.level) } : null,
+                          ].filter(Boolean)}
+                          footer={isFree ? "Free" : formatPrice(cls.price)}
+                        >
+                          <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                            {cls.subjects?.slice(0, 2).map((subj) => (
+                              <Badge key={subj} variant="secondary" size="sm">
+                                {subj}
+                              </Badge>
+                            ))}
+                            {cls.subjects?.length > 2 && (
+                              <Badge variant="outline" size="sm">
+                                +{cls.subjects.length - 2} more
                               </Badge>
                             )}
                           </div>
-
-                          {/* Duration & Schedule */}
-                          <div className="mb-3 space-y-1 text-sm text-gray-600">
-                            {cls.duration && (
-                              <p className="flex items-center gap-1">
-                                <span>Duration: {cls.duration}</span>
-                              </p>
-                            )}
-                            {cls.schedule && (
-                              <p className="flex items-center gap-1">
-                                <span>{cls.schedule}</span>
-                              </p>
-                            )}
-                          </div>
-
-                          {/* Top 3 Subject Chips */}
-                          {cls.subjects?.length > 0 && (
-                            <div className="mb-4 flex flex-wrap gap-1.5">
-                              {cls.subjects.slice(0, 3).map((subj) => (
-                                <Badge key={subj} variant="outline" size="sm">
-                                  {subj}
-                                </Badge>
-                              ))}
-                              {cls.subjects.length > 3 && (
-                                <Badge variant="outline" size="sm">
-                                  +{cls.subjects.length - 3} more
-                                </Badge>
-                              )}
-                            </div>
-                          )}
-                        </div>
-
-                        <div>
-                          {/* View details button */}
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="w-full"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/online-classes/${cls._id}`);
-                            }}
-                          >
-                            View details
-                          </Button>
-                        </div>
-                      </Card>
+                        </GradientCard>
+                      </Reveal>
                     );
                   })}
                 </div>

@@ -11,6 +11,7 @@ import {
   ErrorBanner,
   LoadingSpinner,
 } from "../components/ui";
+import { SectionLabel, GradientCard } from "../components/ui/design";
 
 /**
  * Profile Page
@@ -362,10 +363,8 @@ function Profile() {
         {/* Top Header Banner */}
         <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-[#5472FC]">
-              {roleLabel} Portal
-            </p>
-            <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">
+            <SectionLabel>{roleLabel} Portal</SectionLabel>
+            <h1 className="text-3xl font-black tracking-tight sm:text-4xl">
               My Profile
             </h1>
             <p className="mt-2 text-sm text-slate-500">
@@ -380,7 +379,7 @@ function Profile() {
               <button
                 type="button"
                 onClick={startEditing}
-                className="rounded-xl bg-[#5472FC] px-5 py-3 text-xs font-black text-white shadow-sm transition-colors hover:bg-[#435DDE]"
+                className="rounded-full bg-[#5472FC] px-5 py-3 text-xs font-black text-white shadow-sm shadow-[#5472FC]/30 transition-all hover:-translate-y-0.5 hover:bg-[#435DDE] hover:shadow-md"
               >
                 Edit profile
               </button>
@@ -388,7 +387,7 @@ function Profile() {
             <button
               type="button"
               onClick={() => setConfirmLogout(true)}
-              className="rounded-xl border border-rose-200 bg-rose-50 px-5 py-3 text-xs font-black text-rose-700 transition-colors hover:bg-rose-100"
+              className="rounded-full border border-rose-200 bg-rose-50 px-5 py-3 text-xs font-black text-rose-700 transition-colors hover:bg-rose-100"
             >
               Sign out ➔
             </button>
@@ -763,7 +762,7 @@ function Profile() {
                       <button
                         type="button"
                         onClick={() => navigate("/cv-maker")}
-                        className="mt-5 rounded-xl bg-[#5472FC] px-4 py-2.5 text-xs font-black text-white transition-colors hover:bg-[#435DDE]"
+                        className="mt-5 rounded-full bg-[#5472FC] px-4 py-2.5 text-xs font-black text-white shadow-sm shadow-[#5472FC]/30 transition-all hover:-translate-y-0.5 hover:bg-[#435DDE] hover:shadow-md"
                       >
                         Open CV Maker ↗
                       </button>
@@ -781,7 +780,7 @@ function Profile() {
                       <button
                         type="button"
                         onClick={() => navigate(dashboardLink.path)}
-                        className="mt-5 rounded-xl bg-[#5472FC] px-4 py-2.5 text-xs font-black text-white transition-colors hover:bg-[#435DDE]"
+                        className="mt-5 rounded-full bg-[#5472FC] px-4 py-2.5 text-xs font-black text-white shadow-sm shadow-[#5472FC]/30 transition-all hover:-translate-y-0.5 hover:bg-[#435DDE] hover:shadow-md"
                       >
                         Open {dashboardLink.label} ↗
                       </button>
@@ -798,14 +797,14 @@ function Profile() {
                   type="button"
                   onClick={cancelEditing}
                   disabled={saving}
-                  className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-xs font-black text-slate-600 transition-colors hover:bg-slate-50"
+                  className="rounded-full border border-slate-200 bg-white px-5 py-3 text-xs font-black text-slate-600 transition-colors hover:bg-slate-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="rounded-xl bg-[#5472FC] px-5 py-3 text-xs font-black text-white transition-colors hover:bg-[#435DDE]"
+                  className="rounded-full bg-[#5472FC] px-5 py-3 text-xs font-black text-white shadow-sm shadow-[#5472FC]/30 transition-all hover:-translate-y-0.5 hover:bg-[#435DDE] hover:shadow-md disabled:pointer-events-none disabled:opacity-70"
                 >
                   {saving ? "Saving..." : "Save changes"}
                 </button>
@@ -829,23 +828,33 @@ function Profile() {
             ) : (
               <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3">
                 {savedColleges.map((college) => (
-                  <Card key={college._id} hover onClick={() => navigate(`/colleges/${college._id}`)}>
-                    <h3 className="text-lg font-black text-slate-950">{college.collegeName}</h3>
-                    <p className="mt-1 text-sm font-semibold text-gray-600">
-                      {college.city} {college.affiliation && `• ${college.affiliation}`}
-                    </p>
-                    <div className="mt-3 flex items-center gap-2">
+                  <GradientCard
+                    key={college._id}
+                    accent="blue"
+                    icon="graduation"
+                    kicker="College"
+                    onClick={() => navigate(`/colleges/${college._id}`)}
+                    badge={
+                      college.rating > 0 ? (
+                        <span className="rounded-md bg-white/95 px-2 py-0.5 text-[10px] font-black text-amber-600">
+                          {Number(college.rating).toFixed(1)} ★
+                        </span>
+                      ) : null
+                    }
+                    title={college.collegeName}
+                    subtitle={college.affiliation || "Affiliated program"}
+                    metaItems={[{ icon: "pin", text: college.city || "Nepal" }]}
+                    footer="View details"
+                  >
+                    <div className="mt-3">
                       <Badge
                         variant={college.admissionStatus === "open" ? "success" : "danger"}
                         size="sm"
                       >
                         {college.admissionStatus === "open" ? "Open" : "Closed"}
                       </Badge>
-                      <span className="text-xs font-bold text-amber-500">
-                        {college.rating} / 5
-                      </span>
                     </div>
-                  </Card>
+                  </GradientCard>
                 ))}
               </div>
             )}
@@ -867,25 +876,28 @@ function Profile() {
             ) : (
               <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3">
                 {savedJobs.map((job) => (
-                  <Card key={job._id} hover onClick={() => navigate(`/jobs/${job._id}`)}>
-                    <p className="text-xs font-bold text-gray-500">{job.companyName}</p>
-                    <h3 className="mt-1 text-lg font-black text-slate-950">{job.title}</h3>
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      <Badge variant="primary" size="sm">
-                        {job.type}
-                      </Badge>
-                      {job.workMode && (
-                        <Badge variant="secondary" size="sm">
+                  <GradientCard
+                    key={job._id}
+                    accent="emerald"
+                    icon="briefcase"
+                    kicker={job.type === "internship" ? "Internship" : "Job"}
+                    onClick={() => navigate(`/jobs/${job._id}`)}
+                    badge={
+                      job.workMode ? (
+                        <span className="rounded-md bg-white/95 px-2 py-0.5 text-[10px] font-black uppercase text-emerald-700">
                           {job.workMode}
-                        </Badge>
-                      )}
-                    </div>
-                    {job.stipendOrSalaryRange && (
-                      <p className="mt-3 text-xs font-bold text-slate-900">
-                        {job.stipendOrSalaryRange}
-                      </p>
-                    )}
-                  </Card>
+                        </span>
+                      ) : null
+                    }
+                    title={job.title}
+                    subtitle={job.companyName}
+                    metaItems={
+                      job.stipendOrSalaryRange
+                        ? [{ icon: "briefcase", text: job.stipendOrSalaryRange }]
+                        : []
+                    }
+                    footer="View details"
+                  />
                 ))}
               </div>
             )}
@@ -907,14 +919,24 @@ function Profile() {
             ) : (
               <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3">
                 {savedClasses.map((cls) => (
-                  <Card key={cls._id} hover onClick={() => navigate(`/online-classes/${cls._id}`)}>
-                    <p className="text-xs font-bold text-gray-500">{cls.instructorOrOrganization}</p>
-                    <h3 className="mt-1 text-lg font-black text-slate-950">{cls.classTitle}</h3>
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      {cls.mode && <Badge variant="primary" size="sm">{cls.mode}</Badge>}
-                      {cls.level && <Badge variant="secondary" size="sm">{cls.level}</Badge>}
-                    </div>
-                  </Card>
+                  <GradientCard
+                    key={cls._id}
+                    accent="violet"
+                    icon="laptop"
+                    kicker={cls.mode || "Online Class"}
+                    onClick={() => navigate(`/online-classes/${cls._id}`)}
+                    badge={
+                      cls.certificateAvailability ? (
+                        <span className="rounded-md bg-white/95 px-2 py-0.5 text-[10px] font-black text-violet-700">
+                          Certificate
+                        </span>
+                      ) : null
+                    }
+                    title={cls.classTitle}
+                    subtitle={cls.instructorOrOrganization}
+                    metaItems={cls.level ? [{ icon: "target", text: cls.level }] : []}
+                    footer="View details"
+                  />
                 ))}
               </div>
             )}
