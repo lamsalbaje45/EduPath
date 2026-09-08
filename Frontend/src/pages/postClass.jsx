@@ -412,13 +412,14 @@ function PostClass() {
           </Card>
 
           {/* Submit Buttons */}
-          <div className="flex justify-end gap-3">
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <Button
               type="button"
               variant="outline"
               size="lg"
               onClick={() => navigate("/online-classes")}
               disabled={submitting}
+              className="w-full sm:w-auto"
             >
               Cancel
             </Button>
@@ -427,7 +428,7 @@ function PostClass() {
               variant="primary"
               size="lg"
               loading={submitting}
-              className="bg-[#5472FC] hover:bg-[#435DDE]"
+              className="w-full bg-[#5472FC] hover:bg-[#435DDE] sm:w-auto"
             >
               Submit Class for Review
             </Button>

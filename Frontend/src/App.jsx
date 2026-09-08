@@ -7,6 +7,7 @@ import {
 import Home from "./pages/home";
 import Login from "./pages/login";
 import Navbar from "./pages/navbar";
+import Footer from "./pages/footer";
 import Register from "./pages/register";
 import Profile from "./pages/profile";
 import Colleges from "./pages/colleges";
@@ -149,6 +150,7 @@ function AppRoutes() {
         {/* Catch-all 404 Route */}
         <Route path="*" element={<NotFound />} />
       </Routes>
+      <Footer />
     </>
   );
 }

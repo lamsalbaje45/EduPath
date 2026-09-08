@@ -489,7 +489,7 @@ function ListCollege() {
                         key={idx}
                         className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-1.5 text-xs text-gray-700 border border-gray-200"
                       >
-                        <span className="truncate max-w-md">{img}</span>
+                        <span className="min-w-0 flex-1 truncate">{img}</span>
                         <button
                           type="button"
                           onClick={() => handleRemoveTag(images, setImages, img)}
@@ -506,13 +506,14 @@ function ListCollege() {
           </Card>
 
           {/* Submit Buttons */}
-          <div className="flex justify-end gap-3">
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <Button
               type="button"
               variant="outline"
               size="lg"
               onClick={() => navigate("/colleges")}
               disabled={submitting}
+              className="w-full sm:w-auto"
             >
               Cancel
             </Button>
@@ -521,7 +522,7 @@ function ListCollege() {
               variant="primary"
               size="lg"
               loading={submitting}
-              className="bg-[#5472FC] hover:bg-[#435DDE]"
+              className="w-full bg-[#5472FC] hover:bg-[#435DDE] sm:w-auto"
             >
               Submit Listing for Review
             </Button>

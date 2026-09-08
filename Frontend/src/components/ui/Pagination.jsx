@@ -46,7 +46,7 @@ export const Pagination = ({
   const pageNumbers = getPageNumbers();
 
   return (
-    <div className={`flex items-center justify-center gap-2 ${className}`}>
+    <div className={`flex flex-wrap items-center justify-center gap-2 ${className}`}>
       {/* Previous */}
       <button
         type="button"

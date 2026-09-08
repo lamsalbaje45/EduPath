@@ -199,10 +199,23 @@ function Profile() {
     setDraft((prev) => ({ ...prev, [name]: value }));
   };
 
-  const updateDraftArray = (fieldName, commaSeparatedString) => {
-    const arr = commaSeparatedString.split(",").map((s) => s.trim()).filter(Boolean);
-    setDraft((prev) => ({ ...prev, [fieldName]: arr }));
+  // Keep the raw text the user is typing in draft as-is (a plain string) instead of
+  // re-parsing it into an array on every keystroke. Parsing on every change stripped the
+  // trailing comma/space as soon as it was typed (the empty segment it produces gets
+  // filtered out), which made it impossible to ever start typing a second entry.
+  const updateDraftText = (fieldName, value) => {
+    setDraft((prev) => ({ ...prev, [fieldName]: value }));
   };
+
+  // Parses a comma-separated field back into a clean array. Tolerates the field still
+  // being an array (e.g. untouched since it was loaded from the server).
+  const parseCommaList = (value) =>
+    Array.isArray(value)
+      ? value
+      : (value || "").split(",").map((s) => s.trim()).filter(Boolean);
+
+  // Renders either shape (array from the server, or raw string while being edited) as text.
+  const toCommaText = (value) => (Array.isArray(value) ? value.join(", ") : value || "");
 
   // Save Profile Handler wired to api.updateProfile
   const handleSaveProfile = async (e) => {
@@ -216,24 +229,32 @@ function Profile() {
       profileImage: draft.profileImage,
     };
 
+    const normalizedDraft = {
+      ...draft,
+      preferredCourses: parseCommaList(draft.preferredCourses),
+      preferredCities: parseCommaList(draft.preferredCities),
+      skills: parseCommaList(draft.skills),
+      careerInterests: parseCommaList(draft.careerInterests),
+    };
+
     if (isStudent) {
       payload.studentProfile = {
-        educationLevel: draft.educationLevel,
-        currentCourse: draft.currentCourse,
-        preferredCourses: Array.isArray(draft.preferredCourses) ? draft.preferredCourses : [],
-        preferredCities: Array.isArray(draft.preferredCities) ? draft.preferredCities : [],
-        skills: Array.isArray(draft.skills) ? draft.skills : [],
-        careerInterests: Array.isArray(draft.careerInterests) ? draft.careerInterests : [],
-        preferredOpportunityType: draft.preferredOpportunityType,
-        portfolioLinks: Array.isArray(draft.portfolioLinks) ? draft.portfolioLinks : [],
-        bio: draft.bio,
-        address: draft.address,
+        educationLevel: normalizedDraft.educationLevel,
+        currentCourse: normalizedDraft.currentCourse,
+        preferredCourses: normalizedDraft.preferredCourses,
+        preferredCities: normalizedDraft.preferredCities,
+        skills: normalizedDraft.skills,
+        careerInterests: normalizedDraft.careerInterests,
+        preferredOpportunityType: normalizedDraft.preferredOpportunityType,
+        portfolioLinks: Array.isArray(normalizedDraft.portfolioLinks) ? normalizedDraft.portfolioLinks : [],
+        bio: normalizedDraft.bio,
+        address: normalizedDraft.address,
       };
     }
 
     try {
       const result = await api.updateProfile(payload);
-      setProfileData(draft);
+      setProfileData(normalizedDraft);
       updateUser(result?.data);
       setEditing(false);
       setSaveSuccess(true);
@@ -585,8 +606,8 @@ function Profile() {
                             Preferred Courses (comma-separated)
                           </p>
                           <input
-                            value={(draft.preferredCourses || []).join(", ")}
-                            onChange={(e) => updateDraftArray("preferredCourses", e.target.value)}
+                            value={toCommaText(draft.preferredCourses)}
+                            onChange={(e) => updateDraftText("preferredCourses", e.target.value)}
                             className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#5472FC] focus:ring-2 focus:ring-[#E7EEFF]"
                           />
                         </div>
@@ -611,8 +632,8 @@ function Profile() {
                             Preferred Cities (comma-separated)
                           </p>
                           <input
-                            value={(draft.preferredCities || []).join(", ")}
-                            onChange={(e) => updateDraftArray("preferredCities", e.target.value)}
+                            value={toCommaText(draft.preferredCities)}
+                            onChange={(e) => updateDraftText("preferredCities", e.target.value)}
                             className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#5472FC] focus:ring-2 focus:ring-[#E7EEFF]"
                           />
                         </div>
@@ -654,8 +675,8 @@ function Profile() {
                             Skills (comma-separated)
                           </p>
                           <input
-                            value={(draft.skills || []).join(", ")}
-                            onChange={(e) => updateDraftArray("skills", e.target.value)}
+                            value={toCommaText(draft.skills)}
+                            onChange={(e) => updateDraftText("skills", e.target.value)}
                             className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#5472FC] focus:ring-2 focus:ring-[#E7EEFF]"
                           />
                         </div>
@@ -682,8 +703,8 @@ function Profile() {
                             Interests (comma-separated)
                           </p>
                           <input
-                            value={(draft.careerInterests || []).join(", ")}
-                            onChange={(e) => updateDraftArray("careerInterests", e.target.value)}
+                            value={toCommaText(draft.careerInterests)}
+                            onChange={(e) => updateDraftText("careerInterests", e.target.value)}
                             className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#5472FC] focus:ring-2 focus:ring-[#E7EEFF]"
                           />
                         </div>

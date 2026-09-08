@@ -392,7 +392,7 @@ function AdminDashboard() {
                   </div>
 
                   {/* Category Nav Tabs */}
-                  <div className="flex border-b border-slate-200">
+                  <div className="flex overflow-x-auto border-b border-slate-200">
                     {[
                       { id: "colleges", label: `Colleges (${colleges.length})` },
                       { id: "opportunities", label: `Jobs & Internships (${opportunities.length})` },
@@ -402,7 +402,7 @@ function AdminDashboard() {
                         key={tab.id}
                         type="button"
                         onClick={() => setApprovalTab(tab.id)}
-                        className={`px-4 py-2.5 text-xs font-black border-b-2 ${
+                        className={`whitespace-nowrap px-4 py-2.5 text-xs font-black border-b-2 ${
                           approvalTab === tab.id
                             ? "border-[#5472FC] text-[#5472FC]"
                             : "border-transparent text-slate-500 hover:text-slate-900"
