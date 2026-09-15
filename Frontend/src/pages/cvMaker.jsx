@@ -604,7 +604,7 @@ function CvMaker() {
         <div className="grid gap-6 lg:grid-cols-12">
           {/* Form Pane */}
           <div
-            className={`no-print space-y-4 lg:col-span-6 xl:col-span-5 ${
+            className={`no-print min-w-0 space-y-4 lg:col-span-6 xl:col-span-5 ${
               mobileView === "preview" ? "hidden lg:block" : "block"
             }`}
           >
@@ -1321,7 +1321,7 @@ function CvMaker() {
           {/* Live Preview Pane (Right 7 cols) */}
           <div
             id="cv-preview-pane"
-            className={`lg:col-span-6 xl:col-span-7 ${
+            className={`min-w-0 lg:col-span-6 xl:col-span-7 ${
               mobileView === "form" ? "hidden lg:block" : "block"
             }`}
           >
